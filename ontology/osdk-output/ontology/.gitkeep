@@ -1,0 +1,4 @@
+# Placeholder so this directory exists before the first codegen. The @ontology/sdk dependency
+# points here, and dependency install runs before `foundry generate-osdk` fills it;
+# without an existing directory pnpm warns "Installing a dependency from a non-existent directory".
+# Everything else in this folder is generated and gitignored; this file is overwritten-around by codegen.

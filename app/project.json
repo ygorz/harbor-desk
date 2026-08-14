@@ -1,0 +1,42 @@
+{
+  "name": "app",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "{projectRoot}/src",
+  "projectType": "application",
+  "tags": ["type:frontend"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install-js", "ontology:dev", "typescript-functions:dev", "harbor-desk:await-services"],
+      "options": {
+        "command": "pnpm run dev",
+        "cwd": "{projectRoot}"
+      },
+      "configurations": {
+        "windows": {
+          "command": "pnpm run dev",
+          "cwd": "{projectRoot}"
+        }
+      },
+      "continuous": true
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install-js", "ontology:build", "typescript-functions:build"],
+      "options": {
+        "commands": ["pnpm run build", "foundry build website --application-name 'harbor-desk-app' --application-description '' --package-name 'harbor-desk-app'"],
+        "cwd": "{projectRoot}",
+        "parallel": false
+      }
+    },
+    "dry-run-build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install", "ontology:build", "typescript-functions:dry-run-build"],
+      "options": {
+        "command": "foundry build website --application-name 'harbor-desk-app' --application-description '' --package-name 'harbor-desk-app' --dry-run",
+        "cwd": "{projectRoot}",
+        "parallel": false
+      }
+    }
+  }
+}

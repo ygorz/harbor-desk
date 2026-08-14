@@ -1,0 +1,14 @@
+{
+  "actionTypes": {},
+  "interfaceTypes": {},
+  "objectTypes": {},
+  "ontology": {
+    "apiName": "placeholder-imported-ontology",
+    "description": "Placeholder import metadata. Replace it by running `foundry import ontology --ontology-rid <rid>` (optionally with --objects/--actions/--queries/--interfaces/--shared-property-types). The empty collections below contribute nothing to the build until then.",
+    "displayName": "Imported Ontology (placeholder)",
+    "rid": "ri.ontology.main.ontology.00000000-0000-0000-0000-000000000000"
+  },
+  "queryTypes": {},
+  "sharedPropertyTypes": {},
+  "valueTypes": {}
+}

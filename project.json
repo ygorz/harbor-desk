@@ -1,0 +1,91 @@
+{
+  "name": "harbor-desk",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "status-server": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "foundry start status-server"
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe start status-server"
+        }
+      },
+      "continuous": true
+    },
+    "platform-api-proxy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["status-server"],
+      "options": {
+        "command": "foundry start platform-api-proxy"
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe start platform-api-proxy"
+        }
+      },
+      "continuous": true
+    },
+    "await-services": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["ontology:dev", "typescript-functions:dev", "platform-api-proxy"],
+      "options": {
+        "command": "wait-on -t 900000 file:.palantir/.ontology-discovery.json file:.palantir/.typescript-functions-discovery.json file:.palantir/.platform-api-proxy-discovery.json"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["app:dev", "ontology:dev", "typescript-functions:dev", "harbor-desk:platform-api-proxy"],
+      "options": {
+        "command": "foundry start display"
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe start display"
+        }
+      },
+      "continuous": true
+    },
+    "install-js": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "foundry install pnpm"
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe install pnpm"
+        }
+      }
+    },
+    "install": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["install-js"],
+      "options": {
+        "command": "echo 'All installs complete'"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["app:build", "ontology:build", "typescript-functions:build"],
+      "options": {
+        "command": "foundry bundle --project-version \"${FOUNDRY_PRODUCT_VERSION:-1.0.0}\""
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe bundle --project-version \"1.0.0\""
+        }
+      }
+    },
+    "configure": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["app:dry-run-build", "ontology:build", "typescript-functions:dry-run-build"],
+      "options": {
+        "command": "foundry deploy configure",
+        "forwardAllArgs": true
+      }
+    }
+  }
+}

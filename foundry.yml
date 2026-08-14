@@ -1,0 +1,27 @@
+minCliVersion: "0.205.0"
+functionsTypescriptRuntimeVersion: "0.123.0"
+components:
+  - type: ONTOLOGY
+    path: ./ontology
+  - type: TYPESCRIPT_FUNCTIONS
+    path: ./functions/typescript-functions
+  - type: APP
+    path: ./app
+imports:
+  - ontology: ontology/external-imports/ontology-full-metadata.json
+bundle:
+  name: "harbor-desk"
+  description: "Casework desk for financial-crime investigations. Ontology, policy, and UI ship as one Marketplace product."
+  mavenCoordinate: "com.harbordesk:harbor-desk"
+  installMode: SINGLETON
+osdkOutput: ontology/osdk-output
+apiNamespace: com.harbordesk
+platformApiProxy:
+  passthrough:
+    - path: /api/v2/admin/users/getCurrent
+      methods: [GET]
+signingKeys:
+  - type: local
+    local:
+      name: "default"
+      path: "/Users/george/Library/Application Support/foundry-cli/keys/default.pem"

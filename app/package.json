@@ -1,0 +1,52 @@
+{
+  "name": "harbor-desk-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:remote": "vite --mode code-workspaces",
+    "build": "tsc --noEmit && vite build",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --report-unused-disable-directives --max-warnings 0 --fix",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@blueprintjs/core": "6.17.2",
+    "@blueprintjs/icons": "6.13.0",
+    "@ontology/sdk": "link:../ontology/osdk-output/ontology",
+    "@osdk/client": "2.47.0",
+    "@osdk/foundry.admin": "2.68.0",
+    "@osdk/oauth": "1.13.0",
+    "@osdk/react": "2.47.0",
+    "@osdk/react-components": "0.40.0",
+    "@remix-run/router": "1.23.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.4",
+    "react-syntax-highlighter": "16.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.5",
+    "@types/node": "20.19.43",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@types/react-syntax-highlighter": "15.5.13",
+    "@typescript-eslint/eslint-plugin": "8.64.0",
+    "@typescript-eslint/parser": "8.64.0",
+    "@vitejs/plugin-react": "4.7.0",
+    "@osdk/vite-plugin-superrepo": "0.10.0",
+    "@osdk/vite-plugin-status-reporter": "0.6.0",
+    "eslint": "9.39.5",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.5.3",
+    "globals": "15.15.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.64.0",
+    "vite": "6.4.3"
+  }
+}

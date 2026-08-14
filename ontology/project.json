@@ -1,0 +1,51 @@
+{
+  "name": "ontology",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "{projectRoot}/src",
+  "projectType": "application",
+  "tags": ["type:ontology"],
+  "targets": {
+    "codegen-bootstrap": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install-js"],
+      "options": {
+        "commands": [
+          "pnpm run build",
+          "foundry install ontology"
+        ],
+        "cwd": "{projectRoot}",
+        "parallel": false
+      },
+      "configurations": {
+        "windows": {
+          "commands": [
+            "pnpm run build",
+            "foundry.exe install ontology"
+          ],
+          "cwd": "{projectRoot}",
+          "parallel": false
+        }
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["codegen-bootstrap", "harbor-desk:status-server"],
+      "options": {
+        "command": "foundry start ontology --seed-dir seed"
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe start ontology --seed-dir seed"
+        }
+      },
+      "continuous": true
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install-js", "codegen-bootstrap"],
+      "options": {
+        "command": "foundry generate-osdk"
+      }
+    }
+  }
+}

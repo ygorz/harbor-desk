@@ -1,0 +1,49 @@
+{
+  "name": "typescript-functions",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "{projectRoot}/src",
+  "projectType": "application",
+  "tags": ["type:functions"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install-js", "ontology:dev", "harbor-desk:status-server"],
+      "options": {
+        "command": "foundry start typescript-functions"
+      },
+      "configurations": {
+        "windows": {
+          "command": "foundry.exe start typescript-functions"
+        }
+      },
+      "continuous": true
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install-js", "ontology:build"],
+      "options": {
+        "commands": [
+          "pnpm run compile",
+          "pnpm run clean-deploy",
+          "foundry run-with-auth 'cd {projectRoot} && pnpm --filter @harbordesk/functions deploy build/deploy --prod --legacy --node-linker hoisted'",
+          "pnpm run pack-osdk",
+          "foundry build function-ts --node-modules-dir build/deploy/node_modules --project-version \"${FOUNDRY_PRODUCT_VERSION:-1.0.0}\""
+        ],
+        "cwd": "{projectRoot}",
+        "parallel": false
+      }
+    },
+    "dry-run-build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["harbor-desk:install", "ontology:build"],
+      "options": {
+        "commands": [
+          "pnpm run compile",
+          "foundry build function-ts --dry-run"
+        ],
+        "cwd": "{projectRoot}",
+        "parallel": false
+      }
+    }
+  }
+}

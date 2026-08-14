@@ -1,0 +1,17 @@
+# Foundry registry & auth for pnpm. `foundry install pnpm` injects FOUNDRY_HOSTNAME and
+# FOUNDRY_TOKEN and tells pnpm to trust this file, so the ${...} placeholders below are expanded
+# at install time — you don't set them yourself.
+#
+# This is deliberately NOT named `.npmrc`: pnpm auto-loads `.npmrc` for *every* command, which
+# would make `pnpm run dev` / `build` print "environment variables are not expanded" warnings.
+# Keeping the Foundry config here means only `foundry install pnpm` reads it, so other commands
+# stay quiet.
+#
+# Change these values if you need a different registry or auth (e.g. an internal mirror).
+
+@foundry:registry=https://${FOUNDRY_HOSTNAME}/artifacts/api/repositories/ri.functions.typescript-osdk.artifacts.repository/contents/release/npm/
+@palantir:registry=https://${FOUNDRY_HOSTNAME}/artifacts/api/repositories/ri.functions.typescript-osdk.artifacts.repository/contents/release/npm/
+//${FOUNDRY_HOSTNAME}/artifacts/api/repositories/ri.functions.typescript-osdk.artifacts.repository/contents/release/npm/:_authToken=${FOUNDRY_TOKEN}
+
+registry=https://${FOUNDRY_HOSTNAME}/artifacts/api/repositories/ri.artifacts.repository.artifactory.external-npm-npmjs/contents/release/npm/
+//${FOUNDRY_HOSTNAME}/artifacts/api/repositories/ri.artifacts.repository.artifactory.external-npm-npmjs/contents/release/npm/:_authToken=${FOUNDRY_TOKEN}

@@ -1,0 +1,36 @@
+packages:
+  - app
+  - ontology
+  - functions/typescript-functions
+
+# Dependencies allowed to run install/build lifecycle scripts. pnpm blocks these by default;
+# a dependency that has a build script but is not listed here will fail the install. Set one
+# to true to run its scripts, false to skip them. Add an entry here if you install a dependency
+# that has to compile on install (e.g. a native addon).
+allowBuilds:
+  esbuild: true
+  nx: true
+  protobufjs: true
+  "@foundry/functions-typescript-runtime": true
+  "@foundry/functions-typescript-runtime-reseed": true
+  canvas: false
+
+# Remove an out-of-date node_modules without asking first. Required for non-interactive runs
+# (CI, and the subshells the build uses); otherwise pnpm waits for a confirmation that never
+# arrives and the install fails.
+confirmModulesPurge: false
+
+# Run package scripts against the installed dependencies as they are, instead of re-checking and
+# reinstalling them before every `pnpm run`. Dependencies are installed explicitly by the build,
+# and this pre-run reinstall can otherwise remove devDependencies the build still needs.
+verifyDepsBeforeRun: false
+
+# Version overrides applied across the whole workspace. pnpm only reads overrides from the
+# workspace root, not from individual packages' package.json files.
+overrides:
+  # Pin the OSDK api/client to a single version everywhere so types line up across app, ontology,
+  # functions, and the generated @ontology/sdk.
+  "@osdk/api": "2.47.0"
+  "@osdk/client": "2.47.0"
+  "@osdk/generator-converters.ontologyir": "2.47.0"
+  "@foundry/functions-typescript-runtime-common": "0.51.0"

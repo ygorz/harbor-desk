@@ -1,0 +1,19 @@
+{
+  "name": "harbor-desk",
+  "private": true,
+  "packageManager": "pnpm@11.12.0",
+  "scripts": {
+    "dev": "NX_SKIP_VSCODE_EXTENSION_INSTALL=true npx nx reset && NX_SKIP_VSCODE_EXTENSION_INSTALL=true npx nx run harbor-desk:dev",
+    "dev:windows": "set NX_SKIP_VSCODE_EXTENSION_INSTALL=true&& npx nx reset && npx nx run harbor-desk:dev --configuration=windows",
+    "build": "NX_SKIP_VSCODE_EXTENSION_INSTALL=true NX_TUI=false npx nx run build --verbose --output-style=stream",
+    "configure": "NX_SKIP_VSCODE_EXTENSION_INSTALL=true NX_TUI=false npx nx run configure"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
+  "devDependencies": {
+    "nx": "23.1.0",
+    "typescript": "5.9.3",
+    "wait-on": "8.0.5"
+  }
+}

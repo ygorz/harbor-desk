@@ -1,0 +1,27 @@
+{
+  "name": "ontology",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx @osdk/maker-import -i external-imports/ontology-full-metadata.json -o src/generated-imports && tsc"
+  },
+   "license": "UNLICENSED",
+  "devDependencies": {
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@osdk/client": "2.47.0",
+    "@osdk/maker": "0.52.0",
+    "@osdk/maker-import": "0.23.0",
+    "@osdk/maker-experimental": "0.43.0",
+    "@osdk/generator-converters.preview": "0.31.0",
+    "@osdk/seed-compiler": "0.8.0",
+    "@osdk/seed-helpers": "0.21.0",
+    "@ontology/sdk": "link:./osdk-output/ontology"
+  },
+  "type": "module",
+  "imports": {
+    "#generated-imports": "./dist/generated-imports/index.js"
+  }
+}

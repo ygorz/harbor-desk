@@ -1,0 +1,19 @@
+{
+    "files.exclude": {
+        "**/node_modules": true,
+        "**/.nx": true,
+        "**/build": true,
+        "**/dist": true,
+        "**/__pycache__": true,
+        "**/.ruff_cache": true
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "[python]": {
+        "editor.defaultFormatter": null,
+        "editor.formatOnSave": false
+    },
+    "typescript.tsserver.maxTsServerMemory": 1024,
+    "git.branchProtection": [],
+    "palantir.openExtensionInSecondarySidebarAutomatically": false
+}

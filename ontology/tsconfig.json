@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "#generated-imports": ["./src/generated-imports/index.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.mts",
+    "src/generated-imports/**/*.ts"
+  ]
+}

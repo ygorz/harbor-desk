@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext"],
+    "target": "ES2021",
+    "declaration": true,
+    "declarationDir": "../dist",
+    "outDir": "../dist",
+    "rootDir": ".",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "emitDeclarationOnly": false
+  },
+  "include": [
+    "*.ts",
+    "**/*.ts"
+  ]
+}

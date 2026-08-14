@@ -1,0 +1,252 @@
+.shell {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+  min-height: 100%;
+  background: #111418;
+}
+
+.header {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.brand {
+  align-items: baseline;
+  display: flex;
+  gap: 10px;
+}
+
+.brandName {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.brandMark {
+  color: #8f99a8;
+  font-size: 12px;
+}
+
+.headerActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.actingAs {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.actingAsLabel {
+  color: #abb3bf;
+  font-size: 12px;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.queue {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.queueHeader {
+  align-items: baseline;
+  color: #abb3bf;
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+}
+
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: auto;
+  padding: 0 8px 12px;
+}
+
+.queueItem {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+  padding: 10px 8px;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+
+.queueItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.queueItemActive {
+  background: rgba(76, 144, 240, 0.12);
+  border-color: rgba(76, 144, 240, 0.35);
+}
+
+.queueItemTop {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.queueTitle {
+  font-weight: 600;
+}
+
+.queueId {
+  color: #8f99a8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+.queueMeta {
+  align-items: baseline;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.queueSubject {
+  color: #8f99a8;
+  font-size: 11px;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  overflow: auto;
+  padding: 16px 20px 32px;
+}
+
+.empty {
+  color: #abb3bf;
+  margin: auto;
+  max-width: 420px;
+  text-align: center;
+}
+
+.caseHeader {
+  display: grid;
+  gap: 12px;
+}
+
+.caseTitleRow {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.caseTitle {
+  margin: 0;
+}
+
+.caseMeta {
+  color: #abb3bf;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.riskRow {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr auto;
+  max-width: 360px;
+}
+
+.riskLabel {
+  color: #abb3bf;
+  font-size: 12px;
+}
+
+.riskValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.section {
+  display: grid;
+  gap: 10px;
+}
+
+.sectionTitle {
+  color: #abb3bf;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.card {
+  background: #1c2127;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+}
+
+.walletRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.findingHead {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.findingBody {
+  color: #d3d8de;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
