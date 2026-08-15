@@ -13,4 +13,4 @@ TypeScript functions that encode casework policy. Each function returns ontology
 
 Shared weights and status transitions live in `src/lib/policy.ts`. Keep `src/lib/demoScenario.ts` in sync with `ontology/seed/001-harbor.mts`.
 
-See [study-guide.md](../../study-guide.md) for how these sit between the ontology and the desk UI.
+See [docs/study-guide.md](../../docs/study-guide.md) for how these sit between the ontology and the desk UI.

@@ -6,7 +6,7 @@
 - **Object types**: entity definitions with typed properties and a primary key, the building blocks of the ontology.
 - **Properties**: typed fields on an object type (string, integer, double, and so on).
 - **Links**: typed relationships between object types. A one-to-many link is carried by a foreign key property on the many side.
-- **Actions**: the only way to write to the ontology. Either generated from an object type, or backed by a function.
+- **Actions**: how user edits are applied. Either generated from an object type, or backed by a function. Dataset-backed types are also filled by pipelines; Harbor Desk types are writeback.
 - **Functions**: server-side business logic in TypeScript. A function returns edits; an action applies them.
 - **OSDK**: the generated TypeScript client for querying objects and calling actions and functions.
 
@@ -20,9 +20,9 @@ Deployment is triggered by tagging the repository, which Foundry CI picks up. Ta
 
 ## This product
 
-Harbor Desk is a writeback financial-crime casework desk. Types: `analyst`, `person`, `organization`, `ownershipInterest`, `wallet`, `investigationCase` (display name “Case”; `case` is reserved), `finding`. Person and organization implement the `investigatable` interface. Policy lives in functions (`openCase`, `requestClose`, `approveClose`, `addFinding`, `resolveFinding`, `loadDemoScenario`). The UI is `app/src/desk/`.
+Harbor Desk is a writeback financial-crime casework desk. Types: `analyst`, `person`, `organization`, `ownershipInterest`, `wallet`, `investigationCase` (display name “Case”; `case` is a JavaScript reserved word), `finding`. Person and organization implement the `investigatable` interface. Policy lives in functions (`openCase`, `requestClose`, `approveClose`, `addFinding`, `resolveFinding`, `loadDemoScenario`). The UI is `app/src/desk/`.
 
-`study-guide.md` is the teaching document for how the layers connect. Keep it in sync with the product.
+`docs/study-guide.md` is how SuperRepo and this repo connect. `docs/ontology-guide.md` is Palantir ontology design with Harbor Desk as the example. Keep both in sync with the product.
 
 ## Repository structure
 
@@ -100,17 +100,18 @@ This project deliberately does not use `$optimisticUpdate`. `OsdkProvider` sets 
 ## Gotchas
 
 - **The OSDK export name comes from `apiName`, not the exported const.** `defineObject({ apiName: "investigationCase" })` assigned to `export const HarborCase` still generates `export { investigationCase }`. App and function code imports `investigationCase`, and `Osdk.Instance<investigationCase>` is the only form that compiles. Actions kebab-to-camel their `apiName`, so `request-close-action` becomes `requestCloseAction`.
-- **`case` is a reserved word.** Display name is “Case”; API name is `investigationCase`.
+- **`case` is a JavaScript reserved word.** Display name is “Case”; API name is `investigationCase` so the OSDK export is a legal identifier.
 - **`streamUpdates: true` does nothing against the local ontology.** The client opens a websocket to `api/v2/ontologySubscriptions/...`, which the local preview does not serve, so the platform API proxy answers `501 PlatformApiProxyPathNotAllowlisted`. The option is correct to keep for deployed use. Do not add polling to work around it locally.
 - Object types need `editsEnabled: true` for any action to work on them.
 - `defineCreateObjectAction` fails on a duplicate primary key with `Ontologies:ObjectAlreadyExists`. Use `defineCreateOrModifyObjectAction` for upsert behaviour, or generate keys.
 - `@ontology/sdk` imports show TypeScript errors until codegen has run once. Run the dev server before trusting the editor.
 - `ontology.mts` is authored with 4-space indentation. Match the file you are editing.
 - Seed never deploys. After install, use **Load demo**. Keep `ontology/seed/001-harbor.mts` and `functions/.../lib/demoScenario.ts` in sync.
-- `env.yml` is enrollment-specific. Do not commit it.
+- `env.yml` is enrollment-specific. Palantir’s private-team workflow commits it for Foundry CI; this public repo gitignores it. Copy `env.yml.example`.
 
 ## References
 
 See @ontology/README.md for the `@osdk/maker` API reference.
-See @README.md for getting started, project layout and deployment.
-See @study-guide.md for how the layers connect and how to teach from this repo.
+See @README.md for getting started.
+See @docs/study-guide.md for SuperRepo, preview, traces and deploy.
+See @docs/ontology-guide.md for Palantir ontology design.
