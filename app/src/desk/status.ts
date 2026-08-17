@@ -36,6 +36,21 @@ export function statusIntent(status: string | undefined): Intent {
   }
 }
 
+export function severityRank(severity: string | undefined): number {
+  switch (severity) {
+    case "Critical":
+      return 0;
+    case "High":
+      return 1;
+    case "Medium":
+      return 2;
+    case "Low":
+      return 3;
+    default:
+      return 9;
+  }
+}
+
 export function severityIntent(severity: string | undefined): Intent {
   switch (severity) {
     case "Critical":

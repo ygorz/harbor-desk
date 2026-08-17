@@ -1,6 +1,25 @@
 @import "@blueprintjs/core/lib/css/blueprint.css";
 @import "@blueprintjs/icons/lib/css/blueprint-icons.css";
 
+:root,
+.bp6-dark {
+  --hd-accent: var(--bp-palette-cerulean-4);
+  --hd-accent-fill: color-mix(in srgb, var(--bp-palette-cerulean-4) 18%, transparent);
+  --hd-text: var(--bp-palette-light-gray-5);
+  --hd-text-muted: var(--bp-palette-gray-4);
+  --hd-text-faint: var(--bp-palette-gray-3);
+  --hd-surface: var(--bp-surface-background-color-default-rest);
+  --hd-surface-raised: var(--bp-palette-dark-gray-1);
+  --hd-border: var(--bp-surface-border-color-default);
+  --hd-mono:
+    ui-monospace, SFMono-Regular, Menlo, var(--bp-typography-family-mono);
+}
+
+html {
+  color-scheme: dark;
+  height: 100%;
+}
+
 html,
 body,
 #root-container,
@@ -9,18 +28,38 @@ body,
 }
 
 body {
+  background: var(--hd-surface);
+  color: var(--hd-text);
+  font-family: var(--bp-typography-family-default);
+  font-size: var(--bp-typography-size-body-medium);
+  line-height: var(--bp-typography-line-height-large);
   margin: 0;
   min-height: 100vh;
-  background: #111418;
-  color: #f6f7f9;
-  font:
-    14px/1.5 "Inter",
-    system-ui,
-    -apple-system,
-    sans-serif;
 }
 
 html:not(.bp6-focus-disabled) *:focus-visible {
-  outline: 2px solid #4c90f0;
-  outline-offset: 2px;
+  outline: var(--bp-emphasis-focus-width) solid var(--bp-emphasis-focus-color);
+  outline-offset: var(--bp-emphasis-focus-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.hd-live {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }

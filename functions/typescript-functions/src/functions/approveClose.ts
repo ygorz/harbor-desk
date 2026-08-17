@@ -1,12 +1,14 @@
 import { analyst, investigationCase } from "@ontology/sdk";
 import { Client, Osdk } from "@osdk/client";
 import { createEditBatch, Edits, UserFacingError } from "@osdk/functions";
+import { objectId } from "../lib/ids.js";
 import { STATUS_CLOSED, STATUS_PENDING_CLOSE } from "../lib/policy.js";
 
 type OntologyEdit = Edits.Object<typeof investigationCase>;
 
 /**
  * Four-eyes close. The approving analyst cannot be the one who requested close.
+ * Leaves closeRequestedById so the closed file still records who asked.
  */
 function approveClose(
     client: Client,
@@ -23,7 +25,7 @@ function approveClose(
     }
 
     const requesterId = caseToClose.closeRequestedById;
-    const actorId = actingAnalyst.id ?? String(actingAnalyst.$primaryKey);
+    const actorId = objectId(actingAnalyst);
     if (requesterId != null && requesterId === actorId) {
         throw new UserFacingError(
             `${actingAnalyst.name ?? actorId} requested this close. A second analyst has to approve it.`,

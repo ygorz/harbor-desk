@@ -2,7 +2,7 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
-import { FocusStyleManager } from "@blueprintjs/core";
+import { FocusStyleManager, OverlaysProvider } from "@blueprintjs/core";
 import { OsdkProvider, useRegisterUserAgent } from "@osdk/react";
 import client from "./client";
 import "./index.css";
@@ -19,8 +19,10 @@ function UserAgentRegistrar(): null {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <OsdkProvider client={client} devMode={{ actionDelayMs: 0 }}>
-      <UserAgentRegistrar />
-      <RouterProvider router={router} />
+      <OverlaysProvider>
+        <UserAgentRegistrar />
+        <RouterProvider router={router} />
+      </OverlaysProvider>
     </OsdkProvider>
   </StrictMode>,
 );

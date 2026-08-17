@@ -1,13 +1,16 @@
 import { useState, type ReactElement } from "react";
 import {
   Button,
-  Callout,
   Dialog,
   DialogBody,
   DialogFooter,
   FormGroup,
   HTMLSelect,
-  Spinner,
+  Icon,
+  Menu,
+  MenuItem,
+  Popover,
+  Tooltip,
 } from "@blueprintjs/core";
 import type { Osdk } from "@osdk/client";
 import {
@@ -22,14 +25,18 @@ import { useOsdkAction, useOsdkObjects } from "@osdk/react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { ActingAsProvider, useActingAs } from "./ActingAsContext";
 import CaseQueue from "./CaseQueue";
+import { initials } from "./format";
 import { errorMessage, HERO_CASE_ID, isActiveCase } from "./status";
+import { showError } from "./toast";
 import css from "./desk.module.css";
 
 export interface DeskOutletContext {
   analysts: Osdk.Instance<analyst>[];
   cases: Osdk.Instance<investigationCase>[];
   casesLoading: boolean;
-  onError: (message: string | undefined) => void;
+  demoLoaded: boolean;
+  loadDemoPending: boolean;
+  onLoadDemo: () => Promise<void>;
 }
 
 type SubjectOption =
@@ -40,20 +47,34 @@ function subjectKey(row: SubjectOption): string {
   return `${row.kind}:${String(row.object.id ?? row.object.$primaryKey)}`;
 }
 
+function HarborMark(): ReactElement {
+  return (
+    <svg
+      className={css.brandMark}
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        fill="currentColor"
+        d="M3 2.5h1.75v11H3zM11.25 2.5H13v11h-1.75zM3 7.125h10v1.75H3z"
+      />
+    </svg>
+  );
+}
+
 function OpenCaseDialog({
   cases,
   people,
   organizations,
   isOpen,
   onClose,
-  onError,
 }: {
   cases: Osdk.Instance<investigationCase>[];
   people: Osdk.Instance<person>[];
   organizations: Osdk.Instance<organization>[];
   isOpen: boolean;
   onClose: () => void;
-  onError: (message: string | undefined) => void;
 }): ReactElement {
   const { actingAs } = useActingAs();
   const openAction = useOsdkAction(openCaseAction);
@@ -91,14 +112,13 @@ function OpenCaseDialog({
 
   async function submit(): Promise<void> {
     if (actingAs == null) {
-      onError("Select an analyst first.");
+      showError("Select an analyst first.");
       return;
     }
     if (subject == null) {
-      onError("Pick a person or company that does not already have an open case.");
+      showError("Pick a person or company that does not already have an open case.");
       return;
     }
-    onError(undefined);
     try {
       await openAction.applyAction({
         actingAnalyst: actingAs,
@@ -108,30 +128,31 @@ function OpenCaseDialog({
       });
       closeDialog();
     } catch (caught) {
-      onError(errorMessage(caught));
+      showError(errorMessage(caught));
     }
   }
 
   return (
-    <Dialog isOpen={isOpen} onClose={closeDialog} title="Open a case on">
+    <Dialog isOpen={isOpen} onClose={closeDialog} title="Open Case">
       <DialogBody>
         <FormGroup
           label="Person or company"
           labelFor="case-subject"
-          helperText="The left list is investigation files. This opens a new file on a person or company that does not already have one open."
+          helperText="Opens a file on a person or company that does not already have an active case."
         >
           {available.length === 0 ? (
-            <p className={css.brandMark}>
+            <p className={css.muted}>
               Every person and company already has an open case.
             </p>
           ) : (
             <HTMLSelect
               id="case-subject"
               fill
+              autoComplete="off"
               value={selected}
               onChange={(event) => setSelected(event.currentTarget.value)}
             >
-              <option value="">Select subject</option>
+              <option value="">Select subject…</option>
               {available.map((row) => (
                 <option key={subjectKey(row)} value={subjectKey(row)}>
                   {row.object.name} · {row.kind}
@@ -151,7 +172,7 @@ function OpenCaseDialog({
               disabled={selected === "" || actingAs == null || available.length === 0}
               onClick={() => void submit()}
             >
-              Open case
+              Open Case
             </Button>
           </>
         }
@@ -160,69 +181,82 @@ function OpenCaseDialog({
   );
 }
 
+function ActingAsChip({
+  analysts,
+}: {
+  analysts: Osdk.Instance<analyst>[];
+}): ReactElement {
+  const { actingAs, setAnalystId } = useActingAs();
+
+  if (analysts.length === 0) {
+    return <span className={css.muted}>No analysts</span>;
+  }
+
+  const menu = (
+    <Menu>
+      {analysts.map((row) => {
+        const id = String(row.id ?? row.$primaryKey);
+        const current = id === String(actingAs?.id ?? actingAs?.$primaryKey);
+        return (
+          <MenuItem
+            key={row.$primaryKey}
+            text={row.name}
+            label={row.role}
+            icon={current ? "tick" : "blank"}
+            onClick={() => setAnalystId(id)}
+          />
+        );
+      })}
+    </Menu>
+  );
+
+  return (
+    <Popover content={menu} position="bottom-right" minimal>
+      <Tooltip
+        compact
+        content="Policy functions receive this analyst. Switch to approve your own close request."
+        placement="bottom"
+      >
+        <button
+          type="button"
+          className={css.identity}
+          aria-label={`Acting as ${actingAs?.name ?? "analyst"}`}
+        >
+          <span className={css.identityAvatar} aria-hidden="true">
+            {initials(actingAs?.name)}
+          </span>
+          <span className={css.identityText}>
+            <span className={css.identityName}>{actingAs?.name ?? "Analyst"}</span>
+            <span className={css.identityRole}>{actingAs?.role ?? "—"}</span>
+          </span>
+          <Icon className={css.identityCaret} icon="caret-down" size={12} />
+        </button>
+      </Tooltip>
+    </Popover>
+  );
+}
+
 function DeskHeader({
   analysts,
-  demoLoaded,
-  casesLoading,
-  onError,
   onOpenCase,
 }: {
   analysts: Osdk.Instance<analyst>[];
-  demoLoaded: boolean;
-  casesLoading: boolean;
-  onError: (message: string | undefined) => void;
   onOpenCase: () => void;
 }): ReactElement {
-  const { actingAs, setAnalystId } = useActingAs();
-  const loadAction = useOsdkAction(loadDemoScenarioAction);
-  const navigate = useNavigate();
-
-  async function loadDemo(): Promise<void> {
-    onError(undefined);
-    try {
-      await loadAction.applyAction({});
-      void navigate(`/cases/${HERO_CASE_ID}`);
-    } catch (caught) {
-      onError(errorMessage(caught));
-    }
-  }
-
   return (
     <header className={css.header}>
       <div className={css.brand}>
-        <h1 className={css.brandName}>Harbor Desk</h1>
-        <span className={css.brandMark}>Casework</span>
+        <HarborMark />
+        <div className={css.brandText}>
+          <p className={css.brandName}>Harbor Desk</p>
+          <span className={css.brandTag}>Investigations</span>
+        </div>
       </div>
       <div className={css.headerActions}>
-        <div className={css.actingAs}>
-          <span className={css.actingAsLabel} id="acting-as-label">
-            Acting as
-          </span>
-          <HTMLSelect
-            aria-labelledby="acting-as-label"
-            value={actingAs?.id ?? ""}
-            disabled={analysts.length === 0}
-            onChange={(event) => setAnalystId(event.currentTarget.value)}
-          >
-            {analysts.map((row) => (
-              <option key={row.$primaryKey} value={String(row.id ?? row.$primaryKey)}>
-                {row.name} · {row.role}
-              </option>
-            ))}
-          </HTMLSelect>
-        </div>
+        <ActingAsChip analysts={analysts} />
         <Button icon="plus" onClick={onOpenCase}>
-          Open case
+          Open Case
         </Button>
-        {!casesLoading && !demoLoaded && (
-          <Button
-            icon="import"
-            loading={loadAction.isPending}
-            onClick={() => void loadDemo()}
-          >
-            Load demo
-          </Button>
-        )}
       </div>
     </header>
   );
@@ -245,19 +279,31 @@ export default function AppShell(): ReactElement {
     pageSize: 50,
     streamUpdates: true,
   });
+  const loadAction = useOsdkAction(loadDemoScenarioAction);
+  const navigate = useNavigate();
 
-  const [error, setError] = useState<string>();
   const [openCase, setOpenCase] = useState(false);
   const caseRows = cases ?? [];
   const demoLoaded = caseRows.some(
     (row) => String(row.id ?? row.$primaryKey) === HERO_CASE_ID,
   );
 
+  async function loadDemo(): Promise<void> {
+    try {
+      await loadAction.applyAction({});
+      void navigate(`/cases/${HERO_CASE_ID}`);
+    } catch (caught) {
+      showError(errorMessage(caught));
+    }
+  }
+
   const outletContext: DeskOutletContext = {
     analysts,
     cases: caseRows,
     casesLoading,
-    onError: setError,
+    demoLoaded,
+    loadDemoPending: loadAction.isPending,
+    onLoadDemo: loadDemo,
   };
 
   const subjectNames = Object.fromEntries([
@@ -271,36 +317,23 @@ export default function AppShell(): ReactElement {
   return (
     <ActingAsProvider analysts={analysts}>
       <div className={css.shell}>
+        <a className={css.skipLink} href="#workspace">
+          Skip to case
+        </a>
         <DeskHeader
           analysts={analysts}
-          demoLoaded={demoLoaded}
-          casesLoading={casesLoading}
-          onError={setError}
           onOpenCase={() => setOpenCase(true)}
         />
         <div className={css.body}>
-          {casesLoading ? (
-            <aside className={css.queue}>
-              <div className={css.queueHeader}>Queue</div>
-              <Spinner />
-            </aside>
-          ) : (
-            <CaseQueue cases={caseRows} subjectNames={subjectNames} />
-          )}
-          <main className={css.workspace}>
-            {error != null && (
-              <Callout intent="warning">
-                <div className={css.queueItemTop}>
-                  <span>{error}</span>
-                  <Button
-                    variant="minimal"
-                    icon="cross"
-                    aria-label="Dismiss error"
-                    onClick={() => setError(undefined)}
-                  />
-                </div>
-              </Callout>
-            )}
+          <CaseQueue
+            cases={caseRows}
+            casesLoading={casesLoading}
+            subjectNames={subjectNames}
+            demoLoaded={demoLoaded}
+            loadDemoPending={loadAction.isPending}
+            onLoadDemo={() => void loadDemo()}
+          />
+          <main id="workspace" className={css.workspace} tabIndex={-1}>
             <Outlet context={outletContext} />
           </main>
         </div>
@@ -310,7 +343,6 @@ export default function AppShell(): ReactElement {
           organizations={organizations}
           isOpen={openCase}
           onClose={() => setOpenCase(false)}
-          onError={setError}
         />
       </div>
     </ActingAsProvider>

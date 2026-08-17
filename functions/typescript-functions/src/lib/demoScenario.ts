@@ -1,10 +1,23 @@
+/**
+ * Northwind graph for Load demo. Keep in sync with ontology/seed/001-harbor.mts
+ * (seed is local-only and never deployed).
+ */
+
 export const DEMO_CASE_ID = "CASE-2041";
+
+// =============================================================================
+// Analysts
+// =============================================================================
 
 export const analysts = [
     { id: "ANALYST-MAYA", name: "Maya Chen", role: "Lead" },
     { id: "ANALYST-JORDAN", name: "Jordan Hale", role: "Reviewer" },
     { id: "ANALYST-PRIYA", name: "Priya Shah", role: "Reviewer" },
 ] as const;
+
+// =============================================================================
+// People
+// =============================================================================
 
 export const people = [
     {
@@ -14,6 +27,10 @@ export const people = [
         notes: "Cyprus resident. Personal ETH wallet attributed during Northwind intake.",
     },
 ] as const;
+
+// =============================================================================
+// Organizations
+// =============================================================================
 
 export const organizations = [
     {
@@ -39,6 +56,10 @@ export const organizations = [
     },
 ] as const;
 
+// =============================================================================
+// Ownership interests
+// =============================================================================
+
 export const ownershipInterests = [
     {
         id: "OWN-NORTHWIND-VARGA",
@@ -47,6 +68,10 @@ export const ownershipInterests = [
         organizationId: "ORG-NORTHWIND",
     },
 ] as const;
+
+// =============================================================================
+// Wallets
+// =============================================================================
 
 export const wallets = [
     {
@@ -65,9 +90,13 @@ export const wallets = [
     },
 ] as const;
 
+// =============================================================================
+// Cases
+// =============================================================================
+
 export const cases = [
     {
-        id: "CASE-2041",
+        id: DEMO_CASE_ID,
         title: "Northwind — treasury funding",
         status: "In review",
         severity: "High",
@@ -100,6 +129,10 @@ export const cases = [
     },
 ] as const;
 
+// =============================================================================
+// Findings
+// =============================================================================
+
 export const findings = [
     {
         id: "FIND-2041-1",
@@ -107,7 +140,7 @@ export const findings = [
         body: "Northwind Holdings LLC was formed in Delaware. Within 48 hours the treasury wallet received its first inbound ETH transfer.",
         severity: "Critical",
         status: "Open",
-        caseId: "CASE-2041",
+        caseId: DEMO_CASE_ID,
         organizationId: "ORG-NORTHWIND",
         walletId: "WALLET-TREASURY",
     },
@@ -117,17 +150,19 @@ export const findings = [
         body: "The Varga personal wallet sent ETH through one intermediate address into the Northwind treasury. Amounts split just below round figures.",
         severity: "High",
         status: "Open",
-        caseId: "CASE-2041",
+        caseId: DEMO_CASE_ID,
         personId: "PER-VARGA",
         walletId: "WALLET-PERSONAL",
     },
     {
         id: "FIND-2041-3",
         title: "Registered agent is a mass-formation service",
-        body: "The Delaware registered agent appears on several hundred same-week formations. Noted and mitigated after counsel confirmed it is a standard registered-agent product.",
+        body: "The Delaware registered agent appears on several hundred same-week formations.",
         severity: "Medium",
         status: "Mitigated",
-        caseId: "CASE-2041",
+        mitigationNote: "Counsel confirmed it is a standard registered-agent product.",
+        resolvedById: "ANALYST-MAYA",
+        caseId: DEMO_CASE_ID,
         organizationId: "ORG-NORTHWIND",
     },
     {
@@ -160,9 +195,11 @@ export const findings = [
     {
         id: "FIND-1902-1",
         title: "Correspondent-bank narrative filed",
-        body: "Clearstream Payments could not source funds for a £1.8m corridor payment. SAR filed; independent reviewer approved close.",
+        body: "Clearstream Payments could not source funds for a £1.8m corridor payment.",
         severity: "High",
         status: "Mitigated",
+        mitigationNote: "SAR narrative filed with the correspondent bank.",
+        resolvedById: "ANALYST-JORDAN",
         caseId: "CASE-1902",
         organizationId: "ORG-CLEARSTREAM",
     },

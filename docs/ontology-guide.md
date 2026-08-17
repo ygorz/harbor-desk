@@ -1,5 +1,7 @@
 # Ontology design, with Harbor Desk as the example
 
+> This guide was prepared with AI assistance and reviewed against Palantir documentation and the Harbor Desk source. Care was taken to keep it accurate; the platform moves quickly, so small errors may remain. When something matters, prefer the official pages linked at the end.
+
 This guide is about **how Palantir wants you to design an Ontology**: what exists, how it changes, and how to keep the model honest as it grows. Harbor Desk is the worked example. You do not need to run the app to read this.
 
 How SuperRepo packages that Ontology with TypeScript functions and a React desk — local preview, the generated client, deploy — lives in the [study guide](./study-guide.md).
@@ -12,7 +14,7 @@ Official Palantir pages this guide is checked against are listed at the end. Sup
 
 A database schema answers “what columns do we store?” Palantir’s Ontology answers a different question: **what are the real things in this organization, how do they relate, and how are people allowed to change them?**
 
-Palantir’s own wording: the Ontology is an **operational layer**. It sits on top of digital assets (datasets, virtual tables, models) and connects them to real-world counterparts — plants, equipment, orders, people. In many settings it is a **digital twin of the organization**.
+Palantir’s [overview](https://www.palantir.com/docs/foundry/ontology/overview/): the Ontology is an **operational layer**. It sits on top of digital assets (datasets, virtual tables, models) and connects them to real-world counterparts — plants, equipment, orders, people. In many settings it is a **digital twin of the organization**.
 
 That is why “ontologize this CSV” is a trap. A spreadsheet row is often several real things glued together. The Ontology is supposed to look like how an investigator (or a doctor, or a warehouse manager) already talks, not like how a source system dumps files.
 
@@ -27,11 +29,11 @@ Palantir splits the Ontology into two kinds of element ([overview](https://www.p
 | **Semantic** | What exists: object types, properties, links | Person, organization, wallet, case, finding, … in `ontology/src/ontology.mts` |
 | **Kinetic** | How it changes under governance: actions, functions, and dynamic security | Function-backed actions such as Open case and Request close. Security is designed, not encoded in this product yet |
 
-**Interfaces** are a third *kind of Ontology type*, not a third official “layer.” Palantir: an interface “describes the shape of an object type and its capabilities” and gives you polymorphism — one workflow that can talk to several object types that share a shape. Harbor Desk’s `investigatable` is that: person and organization both implement it.
+**Interfaces** are a third *kind of Ontology type*, not a third official “layer.” An interface “[describes the shape of an object type and its capabilities](https://www.palantir.com/docs/foundry/interfaces/interface-overview/)” and provides polymorphism — one workflow that can talk to several object types that share a shape. Harbor Desk’s `investigatable` is that: person and organization both implement it.
 
 SuperRepo authors the semantic pieces, the interfaces, and the action definitions in `ontology.mts`, and the functions in `functions/`. The generated **OSDK** (Ontology SDK) is the TypeScript client for all of that — not a third layer of the Ontology.
 
-Workshop, Object Explorer, Quiver, and AIP **consume** the same Ontology. SuperRepo does not author those apps. After Harbor Desk deploys, its types are real types in the Ontology you installed into. Other Foundry tools can use them if they have permission. SuperRepo-installed types are [locked](https://www.palantir.com/docs/foundry/superrepo/faq): edits in Ontology Manager are overwritten on the next SuperRepo deploy. Code is the source of truth.
+[Object Views](https://www.palantir.com/docs/foundry/object-views/overview), [Object Explorer](https://www.palantir.com/docs/foundry/object-explorer/overview), Quiver, [Workshop](https://www.palantir.com/docs/foundry/workshop/overview), and AIP **consume** the same Ontology. SuperRepo does not author those apps. After Harbor Desk deploys, its types are real types in the Ontology you installed into. Other Foundry tools can use them if they have permission. SuperRepo-installed types are [locked](https://www.palantir.com/docs/foundry/superrepo/faq) by default; you can unlock the project, but edits in [Ontology Manager](https://www.palantir.com/docs/foundry/ontology-manager/overview/) are overwritten on the next SuperRepo deploy. Code is the source of truth.
 
 ---
 
@@ -61,7 +63,7 @@ Harbor Desk:
 
 - Northwind Holdings is the **organization**. “Treasury funded within 48 hours of incorporation” is a **finding**, not a column on the organization.
 - Elena Varga is a **person**. “Beneficial owner of Northwind” is an **ownershipInterest**, not a note on either party.
-- A previous `entity` type was removed. Palantir’s God Object test is “what kind of Asset is this?” Asking “what kind of Entity is this?” failed that test. Person and organization are the split.
+- A previous `entity` type was removed. Palantir’s [God Object](https://www.palantir.com/docs/foundry/ontology/ontology-anti-patterns) indicator is asking “What kind of [Object] is this?” Asking that of `entity` failed the test. Person and organization are the split.
 
 ### 2.2 Don’t repeat yourself (rule of three)
 
@@ -77,7 +79,7 @@ Harbor Desk:
 - Shared shape across person and organization is the `investigatable` interface plus three **shared property types**: `name`, `jurisdiction`, `notes`. A shared property type is DRY for a single field. An interface is DRY for a capability or a taxonomy.
 - Close and risk policy lives in one module (`functions/.../lib/policy.ts`) used by every mutating function.
 
-Still duplicated, on purpose: `personCases` and `organizationCases` (same for wallets and findings). Palantir’s structural guidance says: if the platform cannot target the interface yet, **define the interface now and duplicate per type temporarily**. Harbor Desk did that. When interface-typed links are usable, those pairs collapse.
+Still duplicated, on purpose: `personCases` and `organizationCases` (same for wallets and findings). [Structural guidance](https://www.palantir.com/docs/foundry/ontology/ontology-structural-guidance): if the interface is not yet supported in a specific context, **define the interface now and duplicate the workflow per type as a temporary measure**. Harbor Desk did that. When interface-typed links are usable, those pairs collapse.
 
 ### 2.3 Open for extension, closed for modification
 
@@ -106,7 +108,7 @@ Harbor Desk:
 - Harbor Desk did not build `InvestigatableEntity → LegalPerson → Organization`. That would have been the deep-hierarchy anti-pattern.
 - Capabilities get their own interfaces when a second use appears (rule of three). There is no `SchedulableInvestigatable`.
 
-Palantir writes this down explicitly: even where tooling does not fully support interface-backed workflows, define the interface now. Harbor Desk’s duplicated concrete links are that scaffold.
+Harbor Desk’s duplicated concrete links are that scaffold.
 
 ---
 
@@ -116,7 +118,7 @@ This section is [structural guidance](https://www.palantir.com/docs/foundry/onto
 
 ### 3.1 Properties: curate, do not vacuum
 
-Every property needs business or technical value. Palantir’s Kitchen Sink test: would anyone **see, search, or filter** by this?
+Every property needs business or technical value. Palantir’s [Kitchen Sink](https://www.palantir.com/docs/foundry/ontology/ontology-anti-patterns) test: “Would someone ever need to see, search, or filter by this?”
 
 Include: business identifiers, human-readable attributes, process dates, statuses used by filters or actions.
 
@@ -128,16 +130,16 @@ Harbor Desk properties are short on purpose:
 - Organization: those plus `legalForm`
 - Wallet: `id`, `address`, `chain`, `label`, plus hidden owner foreign keys
 - Case: `id`, `title`, `status`, `severity`, `riskScore`, `summary`, plus hidden foreign keys
-- Finding: `id`, `title`, `body`, `severity`, `status`, plus hidden foreign keys
+- Finding: `id`, `title`, `body`, `severity`, `status`, `mitigationNote`, plus hidden foreign keys
 - Ownership interest: `id`, `role`, plus hidden foreign keys
 
 The hidden foreign keys (`personId`, `organizationId`, `ownerId`, …) are **not** Kitchen Sink. They are the physical carrier of a link. Palantir naming lives on the **link**, not on the foreign key. Users and agents should see `subjectPerson` / `owner`, never `personId`. That is why `hiddenFk()` sets `visibility: "HIDDEN"` and the description says which link to use.
 
-`notes` / `summary` / `body` are long text. The description on `notes` is a design rule: “Relationships belong on links, not only here.” That is how you stop a Kitchen Sink of prose from replacing the graph.
+`notes` / `summary` / `body` / `mitigationNote` are long text. Body is the evidence; mitigationNote is the later decision — do not append one onto the other. The description on `notes` is a design rule: “Relationships belong on links, not only here.” That is how you stop a Kitchen Sink of prose from replacing the graph.
 
 ### 3.2 Shared property types
 
-A shared property type is one concept reused across object types. In Maker:
+A [shared property type](https://www.palantir.com/docs/foundry/object-link-types/create-shared-property/) is one concept reused across object types. In Maker:
 
 ```ts
 const nameProperty = defineSharedPropertyType({
@@ -154,7 +156,7 @@ This is Palantir DRY at property grain. If you later import a Foundry `Customer.
 
 ### 3.3 Store each fact once — derived vs stored rollups
 
-Palantir: **store each fact once, on the object where it belongs.**
+**Store each fact once, on the object where it belongs.**
 
 | Kind | When | Tool |
 |---|---|---|
@@ -171,19 +173,21 @@ Harbor Desk’s `riskScore` is a **stored rollup** of open-finding weights, not 
 - `requestClose` trusts it (`riskScore > 0` ⇒ refuse)
 - The property `description` in `ontology.mts` says so
 
-Why stored? These types use `includeEmptyBackingDatasource: true` (writeback, no pipeline). Local preview has no Foundry derived-property pipeline on them. Palantir’s instruction for that situation is: document the denormalization. It is **not** a derived property. Do not add a user-facing “Recalculate score” action to paper over a missed update — that is Golden Hammer plus Action Sprawl.
+Palantir’s preferred tool for this value is a [derived property](https://www.palantir.com/docs/foundry/object-link-types/derived-properties): query-time, read-only, computed from linked objects (here, open finding weights via `caseFindings`). Derived properties are in beta. They are not a pipeline. Maker declares them as a `{ type: "derived" }` datasource alongside a dataset, not as a transform.
 
-When SuperRepo gets pipelines or derived properties on these types, the correct move is: make `riskScore` a query-time derived property (sum of open finding weights), delete the stored field, delete the recompute in functions. Until then, every new function that creates, resolves, or deletes a finding must update it.
+Harbor Desk stores the integer because these types use `includeEmptyBackingDatasource: true` (empty-backed, edits-enabled) and SuperRepo preview does not give us that derived datasource on them. Palantir’s stored-copy rule still applies: every mutating action must keep it in sync. Do not add a user-facing “Recalculate score” action to paper over a missed update — that is Golden Hammer plus Action Sprawl. Documenting denormalization is Palantir’s scale tradeoff past ~10k objects per query, not the reason this field is stored.
 
-`severity` on a case is **not** that rollup. It is a priority band the analyst (or `openCase`) sets. Two different concepts, two names. Palantir: qualify ambiguous terms (`riskScore` vs a second `severity`).
+When a derived property can be declared on these types, the correct move is: make `riskScore` a query-time derived property (sum of open finding weights), delete the stored field, delete the recompute in functions. Derived properties cannot be edited by functions or actions, so the recompute must go. Until then, every new function that creates, resolves, or deletes a finding must update it. Pipelines are the wrong tool for a live link rollup.
+
+`severity` on a case is **not** that rollup. It is a priority band the analyst (or `openCase`) sets. Two different concepts, two names. Palantir’s naming guidance: [qualify](https://www.palantir.com/docs/foundry/ontology/ontology-structural-guidance) ambiguous terms (`riskScore` vs a second `severity`).
 
 ### 3.4 Structs
 
-Group fields that are one concept: an address, coordinates, an LLM output plus confidence plus source plus reasoning.
+[Group semantically related fields into structs](https://www.palantir.com/docs/foundry/ontology/ontology-structural-guidance): an address, coordinates, an LLM output plus confidence plus source plus reasoning.
 
-Designate a **main field** so the struct can behave like a simple property in interfaces and queries. Palantir calls out AI outputs specifically: capture confidence, source, and reasoning **in the same struct**, not as sibling properties.
+Designate **one or more main fields** so the struct can behave like a simple property in interfaces and queries. Capture confidence, source, and reasoning **in the same struct**, not as sibling properties.
 
-Harbor Desk does not use structs yet. Nothing it stores is a multi-field value. When a geocoded address, an AIP extraction blob, or lat/long on a wallet cluster appears, that is a struct, not `addressStreet` / `addressCity`.
+Harbor Desk does not use structs yet. Nothing it stores is a multi-field value. SuperRepo Maker can declare struct types, but Palantir currently [creates structs from datasets and Restricted Views](https://www.palantir.com/docs/foundry/object-link-types/structs-overview/) — verify before promising structs on these empty-backed types. When a geocoded address, an AIP extraction blob, or lat/long on a wallet cluster appears and the backing allows it, that is a struct, not `addressStreet` / `addressCity`.
 
 ### 3.5 Links: direct vs object-backed
 
@@ -202,23 +206,24 @@ flowchart LR
 
 | Kind | When | Harbor Desk |
 |---|---|---|
-| Direct | Relationship has no metadata of its own | Analyst → assigned cases (`owner`). Case → findings (`parentCase`). Person → wallets (`ownerPerson`). |
+| Direct | Relationship has no metadata of its own | Analyst → assigned cases (`owner`). Analyst → resolved findings (`resolvedBy`). Case → findings (`parentCase`). Person → wallets (`ownerPerson`). |
 | Object-backed | Relationship has dates, role, status, allocation | Person → `ownershipInterest` → Organization. Role lives on the interest. |
 
 Palantir’s example is Employee → VentureStaffing → Venture (`role`, `startDate`, `allocation`). If you hang `ventureRole` on Employee, it becomes ambiguous the moment there are two assignments.
 
 Harbor Desk’s `ownershipInterest` is that pattern. Elena can be beneficial owner of Northwind **and** director of Harbor Retail without colliding. The object *is* the relationship.
 
-Maker can also declare a collapsed many-to-many (`defineLink` with `intermediaryObjectType`) so workflows see Person → Organization directly *or* Person → Interest → Organization. Harbor Desk did not add the collapsed view. Add it when a UI needs “UBOs of this org” without walking the intermediary.
+Maker can also declare Palantir’s **[object-backed link type](https://www.palantir.com/docs/foundry/object-link-types/create-link-type/)** — the optional direct view — with `defineLink` and `intermediaryObjectType`, so workflows see Person → Organization directly *or* Person → Interest → Organization. Harbor Desk has the intermediary object and the two one-to-many links; it did not add that direct view. Add it when a UI needs “UBOs of this org” without walking the intermediary.
 
-**Name both directions.** Palantir: Employee → `department`; Department → `employees`. Harbor Desk examples:
+**Name both directions.** Employee → `department`; Department → `employees`. Harbor Desk examples:
 
 | From | Link apiName on that side | Reads as |
 |---|---|---|
 | Case | `owner` | the assigned analyst |
 | Analyst | `assignedCases` | cases this analyst owns |
+| Analyst | `resolvedFindings` | findings this analyst mitigated |
 | Case | `subjectPerson` / `subjectOrganization` | who the file is on |
-| Finding | `parentCase`, `relatedPerson`, `relatedOrganization`, `relatedWallet` | evidence targets |
+| Finding | `parentCase`, `relatedPerson`, `relatedOrganization`, `relatedWallet`, `resolvedBy` | evidence targets and who mitigated |
 | Ownership | `beneficialOwner`, `ownedOrganization` | the two ends of the interest |
 
 Never `relatedItems` or `link1`.
@@ -242,6 +247,7 @@ flowchart TB
   organization -.-> investigatable
   analyst -->|"assignedCases / owner"| caseType
   analyst -->|"closeRequestedCases / closeRequester"| caseType
+  analyst -->|"resolvedFindings / resolvedBy"| finding
   person -->|"personCases / subjectPerson"| caseType
   organization -->|"organizationCases / subjectOrganization"| caseType
   person -->|"personWallets / ownerPerson"| wallet
@@ -254,7 +260,7 @@ flowchart TB
   organization -->|"organizationOwnership / ownedOrganization"| ownership
 ```
 
-Twelve one-to-many links. Person and organization implement `investigatable`; the interface is not itself an object type.
+Thirteen one-to-many links. Person and organization implement `investigatable`; the interface is not instantiable, is not dataset-backed, and is not itself an object type.
 
 ### 3.6 Interfaces
 
@@ -262,16 +268,18 @@ Use when types share properties, links, or actions; when a workflow should run o
 
 Harbor Desk’s `investigatable`:
 
-- Shared properties: `id`, `name`, `jurisdiction`, `notes`
+- Properties: `id` (local), plus shared property types `name`, `jurisdiction`, `notes`. Palantir lets interface properties be **local (recommended)** or shared; SPTs here are valid, not the Ontology Manager default.
 - Implemented by person and organization via `implementsInterfaces` + `propertyMapping`
-- **Not** used as the type of a link (interface-typed links are still immature in this stack; Harbor Desk duplicates concrete links instead)
+- **Not** used as the type of a link. “[Support for interface link types is in development](https://www.palantir.com/docs/foundry/interfaces/interface-overview/).” Harbor Desk duplicates concrete links instead.
 - Concrete `personCases` / `organizationCases` duplicate the shape
 
-Palantir: “Scaffold now, consolidate later.” When interface links work, case subject becomes one link to `investigatable`, `openCase` takes one investigatable instance, and the XOR in `openCase` goes away.
+When interface link types are usable, case subject becomes one link to `investigatable`, `openCase` takes one investigatable instance, and the XOR in `openCase` goes away.
 
-The OSDK `$as` helper (from Palantir’s advanced to-do example) is how you pivot an instance to an interface implementation once you fetch with base properties included. Harbor Desk does not use it yet: it never fetches “an investigatable.” It fetches a person or an organization.
+The OSDK `$as` helper (from Palantir’s [advanced to-do example](https://www.palantir.com/docs/foundry/ontology-sdk-react-applications/usecodingtask-tsx/)) is how you pivot an instance to an interface implementation once you fetch with base properties included. Harbor Desk does not use it yet: it never fetches “an investigatable.” It fetches a person or an organization.
 
 ### 3.7 Naming (hard to fix later)
+
+Conventions from [structural guidance](https://www.palantir.com/docs/foundry/ontology/ontology-structural-guidance):
 
 | Element | Palantir convention | Harbor Desk |
 |---|---|---|
@@ -289,7 +297,7 @@ That last paragraph is ontology-as-code specific. Ontology Manager hides it. In 
 
 ### 3.8 Security (design even if you cannot encode it yet)
 
-Palantir: least privilege, expressed in **domain** terms. One type + policy, not duplicated types.
+Least privilege, expressed in **domain** terms ([structural guidance](https://www.palantir.com/docs/foundry/ontology/ontology-structural-guidance)). One type + policy, not duplicated types.
 
 | Layer | Controls |
 |---|---|
@@ -299,30 +307,32 @@ Palantir: least privilege, expressed in **domain** terms. One type + policy, not
 
 `PublicPatient` vs `RestrictedPatient` is Department Silos plus DRY failure. Prefer `Patient` with column restrictions (clinicalNotes → care team) and row restrictions (VIP → senior staff).
 
+Palantir now implements that model primarily as **object and property security policies** ([managing object security](https://www.palantir.com/docs/foundry/object-permissioning/managing-object-security/)). [Restricted views](https://www.palantir.com/docs/foundry/security/restricted-views/) are the data-source path.
+
 SuperRepo local preview does not give you enrollment security. Still:
 
 - Do not fork `RestrictedCase` / `PublicCase`.
 - Intended rules can live in `description`: for example, finding body visible to the case team; closed cases readable more widely.
-- Put access control in Ontology policy when you have it, not only in React. The desk hiding a button is UX. The function throwing `UserFacingError` is governance. Harbor Desk already does the second for close policy. Row/column security is the missing third.
+- Put access control in Ontology policy when you have it, not only in React. The desk hiding a button is UX. `UserFacingError` is validation the analyst sees (close policy), not row/column security. Harbor Desk already does the validation. Object/property security policies are the missing piece.
 
 ---
 
 ## 4. The kinetic layer (choose the right tool)
 
-Palantir’s Golden Hammer page is the map of tools. SuperRepo currently gives you **two** of them. Knowing the others is how you refuse to fake them.
+Palantir’s Golden Hammer section of [anti-patterns](https://www.palantir.com/docs/foundry/ontology/ontology-anti-patterns) is the map of tools. SuperRepo currently gives you **two** of them. Knowing the others is how you refuse to fake them.
 
 | Tool | Best for | SuperRepo today |
 |---|---|---|
-| **Action types** | Human or agent decisions, immediate edits to a few objects | Yes. Function-backed or generated create/modify/delete |
-| **Functions** | Live multi-object logic, validation, policy | Yes. TypeScript v2. Return edits; the action applies them |
-| **Batch pipelines** | Cleanse, join, aggregate, pre-compute | **No.** [FAQ](https://www.palantir.com/docs/foundry/superrepo/faq): no PySpark. Pipelines are [in development](https://www.palantir.com/docs/foundry/superrepo/in-development/). |
+| **[Action types](https://www.palantir.com/docs/foundry/action-types/overview)** | Human or agent decisions, immediate edits to a few objects | Yes. [Function-backed](https://www.palantir.com/docs/foundry/action-types/function-actions-getting-started/) or generated create/modify/delete |
+| **[Functions](https://www.palantir.com/docs/foundry/functions/overview)** | Live multi-object logic, validation, policy | Yes. [TypeScript v2](https://www.palantir.com/docs/foundry/functions/typescript-v2-getting-started). Return edits; the action applies them |
+| **Batch pipelines** | Cleanse, join, aggregate, pre-compute | **No.** SuperRepo does not currently support PySpark. Pipelines are [in development](https://www.palantir.com/docs/foundry/superrepo/in-development/). |
 | **Streaming pipelines** | Continuous ingest | **No** as a SuperRepo component. You can declare a stream as a datasource in Maker for imported or backed types; you cannot author the pipeline here. |
 | **Automations** | React to object created/updated | **No.** Pro-code Automate is on the roadmap. |
 | **Schedules** | Recurring pipeline builds | **No.** |
-| **Compute modules** | Arbitrary compute | **No.** FAQ. |
+| **Compute modules** | Arbitrary compute | **No.** |
 | **External HTTP from functions** | Call an outside API | **No.** Roadmap: “external source support.” |
 
-User-driven edits go through **actions**. Palantir: users edit objects “by applying Actions” ([object edits](https://www.palantir.com/docs/foundry/object-edits/overview/)). Function edit-batches are applied only when the function is configured as a function-backed action ([TypeScript v2 edits](https://www.palantir.com/docs/foundry/functions/typescript-v2-ontology-edits/)). Dataset-backed types are a different path: **pipelines write datasets**, which then back objects. Harbor Desk types are empty-backed writeback, so instances exist because **actions** (or local **seed**) created them.
+User-driven edits go through **actions**. Users edit objects “by applying Actions” ([object edits](https://www.palantir.com/docs/foundry/object-edits/overview/)) — that is Foundry writeback, and it applies to dataset-backed and empty-backed types alike. Function edit-batches are applied only when the function is configured as a function-backed action ([TypeScript v2 edits](https://www.palantir.com/docs/foundry/functions/typescript-v2-ontology-edits/)). Dataset-backed types are a different *ingest* path: **pipelines write datasets**, which then back objects. Harbor Desk types are empty-backed and edits-enabled, so instances exist because **actions** (or local **seed**) created them.
 
 Wrong → right, from Palantir, with Harbor Desk implications:
 
@@ -333,7 +343,7 @@ Wrong → right, from Palantir, with Harbor Desk implications:
 
 ### 4.1 Actions are business operations, not CRUD sprawl
 
-Palantir indicators of Action Sprawl: more than about 10 actions on one type; actions always used in sequence; names like `Update Employee Email`.
+[Action Sprawl](https://www.palantir.com/docs/foundry/ontology/ontology-anti-patterns) indicators: more than about 10 actions on one type; actions always used in sequence; names like `Update Employee Email`.
 
 Prefer `Update Employee Contact Information`, `Transfer Employee`, `Onboard New Employee` — not one action per field.
 
@@ -343,7 +353,7 @@ Harbor Desk kinetic surface:
 |---|---|---|
 | Open case | Open a file on exactly one subject | XOR person/org; no second active case on that subject; status Open, risk 0 |
 | Add finding | Attach evidence | Closed cases refuse; title required; bump `riskScore`; maybe Open → In review |
-| Resolve finding | Mitigate evidence | Only `Open` findings; lower `riskScore` |
+| Resolve finding | Mitigate evidence | Only `Open` findings; require a mitigation note; write `resolvedBy`; lower `riskScore` |
 | Request close | Analyst asks to close | Not Closed / Pending close; `riskScore` must be 0 |
 | Approve close | Four-eyes | Must be Pending close; actor ≠ requester |
 | Load demo | Bootstrap after deploy | Experimental. Seed never deploys |
@@ -356,13 +366,13 @@ Function-backed action parameters are **the function’s parameter names** (`cas
 
 ### 4.2 Functions return edits; actions apply them
 
-A function does **not** write by talking to a REST API. It builds an edit batch and returns it. Palantir: running an edit function outside an action does not modify object data.
+A function does **not** write by talking to a REST API. It builds an edit batch and returns it. [Running an edit function outside an Action does not modify object data](https://www.palantir.com/docs/foundry/functions/typescript-v2-ontology-edits/).
 
 ```
 UI  --applyAction-->  Action  --runs-->  Function  --returns edits-->  Ontology
 ```
 
-`UserFacingError` is what the analyst sees. Throw it for policy violations.
+[`UserFacingError`](https://www.palantir.com/docs/foundry/functions/user-facing-error/) is what the analyst sees. Throw it for policy violations.
 
 Reads inside a function use the same OSDK client the app uses. `openCase` pages existing cases to refuse a second active case on the same subject. That is live Ontology logic Palantir says belongs in a function (depends on other objects, cannot be pre-computed in a pipeline this SuperRepo does not have). That page is `$pageSize: 50` — demo-scale, not a production query.
 
@@ -370,9 +380,9 @@ Read-only functions (queries) exist in the OSDK. Harbor Desk has none. Policy is
 
 ### 4.3 Why policy is not in React
 
-Palantir: security and business rules at the Ontology layer, not ad-hoc app filters. If Workshop, AIP, or a second app call `requestClose`, they must hit the same wall.
+Security and business rules belong at the Ontology layer, not in ad-hoc app filters. If Workshop, AIP, or a second app call `requestClose`, they must hit the same wall.
 
-Harbor Desk’s ActionRail disables buttons for UX. `requestClose` still checks `riskScore`. A caller that skips the UI still fails. That is the point: **the product is the policy**; the UI is a client.
+Harbor Desk’s ClosePath disables buttons for UX and states the gate (open findings, same analyst). `requestClose` still checks `riskScore`. A caller that skips the UI still fails. That is the point: **the product is the policy**; the UI is a client.
 
 Acting-as is a local stand-in for the Foundry user (mock auth has no real user). Four-eyes compares ontology `analyst` objects because there is no real user. On a deployed enrollment, the honest version is: acting analyst = current user, and you stop passing `actingAnalyst` as a spoofable parameter. Until then, the function still enforces “requester ≠ approver” on whatever object it is given.
 
@@ -397,25 +407,25 @@ Walk Palantir’s [list](https://www.palantir.com/docs/foundry/ontology/ontology
 
 ## 6. Named tradeoffs
 
-Palantir: name the tradeoff, defend naming / semantic clarity / security, ship incremental.
+[Name the tradeoffs explicitly](https://www.palantir.com/docs/foundry/ontology/ontology-best-practices). Defend naming, semantic clarity, and security. Ship incremental.
 
 | Tradeoff | Why | When to revisit |
 |---|---|---|
-| Stored `riskScore` instead of derived property | Writeback types; no pipeline/derived props here | SuperRepo derived properties or pipelines; or the first time a function forgets to update it |
+| Stored `riskScore` instead of derived property | Empty-backed types; SuperRepo preview has no derived datasource on them | When a derived property can be declared on these types; or the first time a function forgets to update it |
 | Two optional subject FKs instead of one interface link | Interface-typed links not usable in this stack yet | Interface link types are usable; then one `investigatable` subject |
 | Duplicated person/org links for wallets and findings | Same | Same |
 | Schema cannot XOR `personId` vs `organizationId` | Maker has no XOR constraint | Enforce forever in `openCase`; optionally a second check in add-wallet |
 | `loadDemoScenario` action | Seed does not deploy | Until SuperRepo has a deploy-time seed story |
 | Acting-as instead of Foundry user | Local mock auth | Deployed OAuth; then bind actor to current user |
-| No structs | No multi-field values yet | First address / AIP extraction / geo |
-| No row/column security encoded | Preview cannot express it | First real marking / restricted view on findings |
+| No structs | No multi-field values yet; empty-backed types may not accept structs | First address / AIP extraction / geo, after confirming the backing |
+| No row/column security encoded | Preview cannot express it | First object/property security policy or restricted view on findings |
 | Queue fetches 50 and filters in memory | Demo scale | `.where` on status / owner when it hurts |
 | Duplicate-active-case check pages 50 | Demo scale | Targeted object set query |
-| Hidden FKs read in the UI | Convenience in `SubjectPanel` / `FindingsList` | Traverse named links (`subjectPerson`) instead |
+| Hidden FKs read in the UI | Was convenience in `SubjectPanel` | Traverse named links (`subjectPerson`) instead — the desk does this now |
 | `severity` on both case and finding | Both are priority bands | Rename case to `priority` if anyone is confused |
 | Optimistic updates off | Local action delay is zero | Deployed latency |
 
-None of these violate naming, semantic clarity, or “don’t fork types for security.” Palantir says those three are the ones you do not cut.
+None of these violate naming, semantic clarity, or “don’t fork types for security.” Those three are the ones Palantir says you do not cut.
 
 ---
 
@@ -423,27 +433,27 @@ None of these violate naming, semantic clarity, or “don’t fork types for sec
 
 Deep SuperRepo / OSDK / deploy material is in the [study guide](./study-guide.md). This is only how Palantir design maps onto `ontology.mts`.
 
-`ontology/src/ontology.mts` is compiled and materialized onto the enrollment at deploy. Palantir: “Ontology-as-code acts as the source of truth for your entities, so you should manage all changes from your code definitions.”
+`ontology/src/ontology.mts` is compiled and materialized onto the enrollment at deploy. “[Ontology-as-code acts as the source of truth for your entities](https://www.palantir.com/docs/foundry/superrepo/core-concepts/), so you should manage all changes from your code definitions.”
 
 Never edit `ontology/osdk-output/` or `ontology/src/generated-imports/`. Do not edit SuperRepo types in Ontology Manager unless you want the next deploy to overwrite you.
 
 | You think | You write |
 |---|---|
 | Object type | `defineObject({ apiName, displayName, …, editsEnabled, includeEmptyBackingDatasource })` |
-| Writeback (no dataset) | `includeEmptyBackingDatasource: true` plus `editsEnabled: true` |
+| Empty-backed (edits-enabled) | `includeEmptyBackingDatasource: true` plus `editsEnabled: true` |
 | Shared property | `defineSharedPropertyType` |
 | Interface | `defineInterface` + `implementsInterfaces: [{ implements, propertyMapping }]` |
 | Link | `defineLink({ one, toMany, manyForeignKeyProperty, editsEnabled })` |
 | Function-backed action | `defineFunctionBackedAction({ functionApiName, apiName, displayName })` from `@osdk/maker-experimental` |
 | Generated CRUD | `defineCreateObjectAction` / modify / delete / createOrModify |
 
-Writeback types: instances exist because **actions** (or local **seed**) created them. Seed (`ontology/seed/*.mts`) is local only. After deploy the ontology is empty until Load demo (or real actions). Keep seed and `demoScenario.ts` in sync.
+Empty-backed types: Foundry still [generates an empty dataset for permissions](https://www.palantir.com/docs/foundry/object-link-types/create-object-type/). Instances exist because **actions** (or local **seed**) created them. Seed (`ontology/seed/*.mts`) is local only. After deploy the ontology is empty until Load demo (or real actions). Keep seed and `demoScenario.ts` in sync.
 
 Dataset-backed types (classic Foundry): a pipeline produces a dataset; the object type maps columns to properties. SuperRepo can **import** those (`foundry import ontology`). It cannot yet **author** the pipeline.
 
 Feature order: **ontology → function → action → app**. Skip a step and TypeScript cannot see the type, or the action has no implementation.
 
-Maker API: [palantir/foundry-ontology-sdk](https://github.com/palantir/foundry-ontology-sdk) (`@osdk/maker`, `@osdk/maker-experimental`).
+Maker API: [palantir/osdk-ts](https://github.com/palantir/osdk-ts) (`packages/maker`; `@osdk/maker`, `@osdk/maker-experimental`).
 
 ---
 
@@ -456,7 +466,7 @@ Entities: ...
 Links: A → B (direct | object-backed: why)
 Interfaces: ... implemented by ...
 Actions: business operation → which objects it edits
-Writeback vs dataset-backed: ...
+Empty-backed vs dataset-backed: ...
 Named tradeoffs: ...
 ```
 
@@ -464,7 +474,7 @@ Then:
 
 1. Domain names, not source names.
 2. One type = one entity. Split if you hear “what kind of X is this?”
-3. Curate properties. Hide FKs. Descriptions on everything (Palantir: document in Ontology Manager — in SuperRepo that means `description:` in Maker).
+3. Curate properties. Hide FKs. Descriptions on everything ([document](https://www.palantir.com/docs/foundry/ontology/ontology-best-practices) object types, properties, and links — in SuperRepo that means `description:` in Maker).
 4. Links named both ways. Object-backed if the relationship has metadata.
 5. Interfaces for shared capability or taxonomy (rule of three). Duplicate per type if the platform cannot target the interface yet.
 6. Actions named as operations. Policy in functions. Recompute every stored rollup in every mutator.
@@ -483,7 +493,7 @@ Harbor Desk is a small instance of that:
 - Evidence and ownership as objects, because they have metadata.
 - An interface for the subject, with duplicated links as a documented scaffold.
 - Six actions that are the job, not the columns.
-- A stored rollup because these writeback types cannot derive it yet.
+- A stored rollup because these empty-backed types cannot declare a derived property yet.
 
 Stay ahead by keeping that shape strict while Palantir adds pipelines, automations, agents, and external calls **around** it. The builders who win the SuperRepo beta are the ones whose `ontology.mts` still looks like the design docs when those tools arrive — not the ones who invented `SyncX` actions to fake them.
 
@@ -491,16 +501,36 @@ Stay ahead by keeping that shape strict while Palantir adds pipelines, automatio
 
 ## Official reading
 
-Read in this order:
+**Design canon**
 
 1. [Ontology overview](https://www.palantir.com/docs/foundry/ontology/overview/) — semantic vs kinetic; interfaces
 2. [Best practices](https://www.palantir.com/docs/foundry/ontology/ontology-best-practices)
 3. [Structural guidance](https://www.palantir.com/docs/foundry/ontology/ontology-structural-guidance)
 4. [Anti-patterns](https://www.palantir.com/docs/foundry/ontology/ontology-anti-patterns)
-5. [Object edits](https://www.palantir.com/docs/foundry/object-edits/overview/)
-6. [TypeScript v2 Ontology edits](https://www.palantir.com/docs/foundry/functions/typescript-v2-ontology-edits/)
-7. [OSDK overview](https://www.palantir.com/docs/foundry/ontology-sdk/overview/)
-8. [SuperRepo overview](https://www.palantir.com/docs/foundry/superrepo/overview/) and [Coming in the future](https://www.palantir.com/docs/foundry/superrepo/in-development/)
+
+**Semantic building blocks**
+
+5. [Interfaces overview](https://www.palantir.com/docs/foundry/interfaces/interface-overview/)
+6. [Derived properties](https://www.palantir.com/docs/foundry/object-link-types/derived-properties)
+7. [Create a shared property](https://www.palantir.com/docs/foundry/object-link-types/create-shared-property/)
+8. [Structs overview](https://www.palantir.com/docs/foundry/object-link-types/structs-overview/)
+9. [Create a link type](https://www.palantir.com/docs/foundry/object-link-types/create-link-type/) — object-backed links
+10. [Create an object type](https://www.palantir.com/docs/foundry/object-link-types/create-object-type/) — empty-backed datasources
+
+**Kinetic / security**
+
+11. [Action types overview](https://www.palantir.com/docs/foundry/action-types/overview)
+12. [Function-backed actions](https://www.palantir.com/docs/foundry/action-types/function-actions-getting-started/)
+13. [Functions overview](https://www.palantir.com/docs/foundry/functions/overview)
+14. [Object edits](https://www.palantir.com/docs/foundry/object-edits/overview/)
+15. [TypeScript v2 Ontology edits](https://www.palantir.com/docs/foundry/functions/typescript-v2-ontology-edits/)
+16. [User-facing errors](https://www.palantir.com/docs/foundry/functions/user-facing-error/)
+17. [Managing object security](https://www.palantir.com/docs/foundry/object-permissioning/managing-object-security/)
+18. [Restricted views](https://www.palantir.com/docs/foundry/security/restricted-views/)
+
+**SuperRepo** (OSDK, preview, and deploy are in the [study guide](./study-guide.md))
+
+19. [SuperRepo overview](https://www.palantir.com/docs/foundry/superrepo/overview/), [core concepts](https://www.palantir.com/docs/foundry/superrepo/core-concepts/), [FAQ](https://www.palantir.com/docs/foundry/superrepo/faq), and [Coming in the future](https://www.palantir.com/docs/foundry/superrepo/in-development/)
 
 ---
 
@@ -516,7 +546,8 @@ Read in this order:
 | **Shared property type** | One property definition reused across types |
 | **Action** | How user or agent edits are applied. Function-backed or generated CRUD |
 | **Function** | Server-side logic. Edit functions return a batch; the action applies it |
-| **Writeback** | Object types with empty backing; instances exist because actions (or local seed) created them |
-| **Derived property** | Value computed at query time from links or other objects |
+| **Empty-backed** | `includeEmptyBackingDatasource: true`. Foundry generates an empty dataset for permissions; instances exist because actions (or local seed) created them |
+| **Writeback** | Palantir/OSDK term for user-driven object edits applied via Actions. Distinct from an OSv1 writeback dataset (a materialization of those edits) |
+| **Derived property** | Value computed at query time from linked objects. Beta; read-only; not a pipeline |
 | **OSDK** | Generated client for your Ontology. Details in the study guide |
 | **SuperRepo** | Pro-code monorepo that authors Ontology + functions + React app together |

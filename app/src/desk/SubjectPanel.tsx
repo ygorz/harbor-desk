@@ -1,8 +1,15 @@
 import type { ReactElement } from "react";
-import { Tag } from "@blueprintjs/core";
+import { Icon, NonIdealState, NonIdealStateIconSize } from "@blueprintjs/core";
 import type { Osdk } from "@osdk/client";
-import { organization, ownershipInterest, person, wallet } from "@ontology/sdk";
-import { useLinks, useOsdkObject } from "@osdk/react";
+import {
+  investigationCase,
+  organization,
+  ownershipInterest,
+  person,
+  wallet,
+} from "@ontology/sdk";
+import { useLinks } from "@osdk/react";
+import WalletRow from "./WalletRow";
 import css from "./desk.module.css";
 
 function WalletList({
@@ -11,22 +18,14 @@ function WalletList({
 }: {
   wallets: Osdk.Instance<wallet>[];
   isLoading: boolean;
-}): ReactElement {
-  if (isLoading) return <p className={css.brandMark}>Loading wallets…</p>;
-  if (wallets.length === 0) {
-    return <p className={css.brandMark}>No wallets attributed.</p>;
-  }
+}): ReactElement | null {
+  if (isLoading) return <p className={css.muted}>Loading wallets…</p>;
+  if (wallets.length === 0) return null;
 
   return (
-    <div className={css.stack}>
+    <div className={css.walletList}>
       {wallets.map((item) => (
-        <div key={item.$primaryKey} className={css.walletRow}>
-          <span>{item.label}</span>
-          <Tag minimal>{item.chain}</Tag>
-          <span className={css.mono} title={item.address}>
-            {item.address}
-          </span>
-        </div>
+        <WalletRow key={item.$primaryKey} item={item} />
       ))}
     </div>
   );
@@ -48,28 +47,28 @@ function OrganizationWallets({
   return <WalletList wallets={links?.filter(Boolean) ?? []} isLoading={isLoading} />;
 }
 
-function BeneficialOwnerCard({
+function BeneficialOwner({
   interest,
 }: {
   interest: Osdk.Instance<ownershipInterest>;
 }): ReactElement {
-  const { object: owner, isLoading } = useOsdkObject(
-    person,
-    interest.personId ?? "",
-    { enabled: interest.personId != null && interest.personId !== "" },
-  );
+  const { links, isLoading } = useLinks(interest, "beneficialOwner", {
+    pageSize: 1,
+  });
+  const owner = links?.find(Boolean);
 
-  if (isLoading) return <p className={css.brandMark}>Loading owner…</p>;
+  if (isLoading) return <p className={css.muted}>Loading owner…</p>;
   if (owner == null) {
-    return <div className={css.card}>Beneficial owner not found.</div>;
+    return <p className={css.muted}>Beneficial owner not found.</p>;
   }
 
   return (
-    <div className={css.card}>
-      <div className={css.queueItemTop}>
-        <strong>{owner.name}</strong>
-        <Tag minimal>{interest.role ?? "Owner"}</Tag>
+    <div className={css.ownershipBlock}>
+      <div className={css.subjectType}>
+        <Icon icon="person" size={12} aria-hidden="true" />
+        {interest.role ?? "Beneficial owner"}
       </div>
+      <p className={css.subjectName}>{owner.name}</p>
       <div className={css.caseMeta}>
         <span>{owner.jurisdiction}</span>
       </div>
@@ -91,26 +90,27 @@ function OrganizationOwnership({
   });
   const interests = links?.filter(Boolean) ?? [];
 
-  if (isLoading || interests.length === 0) {
-    return null;
-  }
+  if (isLoading) return <p className={css.muted}>Loading ownership…</p>;
+  if (interests.length === 0) return null;
 
   return (
-    <>
+    <div className={css.ownership}>
+      <span className={css.sectionTitle}>Ownership</span>
       {interests.map((interest) => (
-        <BeneficialOwnerCard key={interest.$primaryKey} interest={interest} />
+        <BeneficialOwner key={interest.$primaryKey} interest={interest} />
       ))}
-    </>
+    </div>
   );
 }
 
-function PersonCard({ subject }: { subject: Osdk.Instance<person> }): ReactElement {
+function PersonFile({ subject }: { subject: Osdk.Instance<person> }): ReactElement {
   return (
-    <div className={css.card}>
-      <div className={css.queueItemTop}>
-        <strong>{subject.name}</strong>
-        <Tag minimal>Person</Tag>
+    <div className={css.subjectFile}>
+      <div className={css.subjectType}>
+        <Icon icon="person" size={12} aria-hidden="true" />
+        Person
       </div>
+      <p className={css.subjectName}>{subject.name}</p>
       <div className={css.caseMeta}>
         <span>{subject.jurisdiction}</span>
       </div>
@@ -122,64 +122,69 @@ function PersonCard({ subject }: { subject: Osdk.Instance<person> }): ReactEleme
   );
 }
 
-function OrganizationCard({
+function OrganizationFile({
   subject,
 }: {
   subject: Osdk.Instance<organization>;
 }): ReactElement {
   return (
-    <>
-      <div className={css.card}>
-        <div className={css.queueItemTop}>
-          <strong>{subject.name}</strong>
-          <Tag minimal>{subject.legalForm ?? "Organization"}</Tag>
-        </div>
-        <div className={css.caseMeta}>
-          <span>{subject.jurisdiction}</span>
-        </div>
-        {subject.notes != null && subject.notes !== "" && (
-          <p className={css.findingBody}>{subject.notes}</p>
-        )}
-        <OrganizationWallets subject={subject} />
+    <div className={css.subjectFile}>
+      <div className={css.subjectType}>
+        <Icon icon="office" size={12} aria-hidden="true" />
+        {subject.legalForm ?? "Organization"}
       </div>
+      <p className={css.subjectName}>{subject.name}</p>
+      <div className={css.caseMeta}>
+        <span>{subject.jurisdiction}</span>
+      </div>
+      {subject.notes != null && subject.notes !== "" && (
+        <p className={css.findingBody}>{subject.notes}</p>
+      )}
+      <OrganizationWallets subject={subject} />
       <OrganizationOwnership subject={subject} />
-    </>
+    </div>
   );
 }
 
 export default function SubjectPanel({
-  personId,
-  organizationId,
+  item,
 }: {
-  personId: string | undefined;
-  organizationId: string | undefined;
+  item: Osdk.Instance<investigationCase>;
 }): ReactElement {
-  const { object: subjectPerson, isLoading: personLoading } = useOsdkObject(
-    person,
-    personId ?? "",
-    { enabled: personId != null && personId !== "" },
+  const { links: people, isLoading: personLoading } = useLinks(
+    item,
+    "subjectPerson",
+    { pageSize: 1 },
   );
-  const { object: subjectOrganization, isLoading: orgLoading } = useOsdkObject(
-    organization,
-    organizationId ?? "",
-    { enabled: organizationId != null && organizationId !== "" },
+  const { links: orgs, isLoading: orgLoading } = useLinks(
+    item,
+    "subjectOrganization",
+    { pageSize: 1 },
   );
 
+  const subjectPerson = people?.find(Boolean);
+  const subjectOrganization = orgs?.find(Boolean);
   const isLoading = personLoading || orgLoading;
   const hasSubject = subjectPerson != null || subjectOrganization != null;
 
   return (
     <section className={css.section} aria-labelledby="subjects-heading">
       <h2 id="subjects-heading" className={css.sectionTitle}>
-        Subjects
+        Subject
       </h2>
-      {isLoading && <p className={css.brandMark}>Loading subject…</p>}
+      {isLoading && <p className={css.muted}>Loading subject…</p>}
       {!isLoading && !hasSubject && (
-        <div className={css.card}>No subject linked to this case.</div>
+        <NonIdealState
+          icon="person"
+          iconSize={NonIdealStateIconSize.SMALL}
+          layout="horizontal"
+          title="No subject linked"
+          description="This case has no person or organization."
+        />
       )}
-      {subjectPerson != null && <PersonCard subject={subjectPerson} />}
+      {subjectPerson != null && <PersonFile subject={subjectPerson} />}
       {subjectOrganization != null && (
-        <OrganizationCard subject={subjectOrganization} />
+        <OrganizationFile subject={subjectOrganization} />
       )}
     </section>
   );

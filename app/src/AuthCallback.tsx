@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { NonIdealState, Spinner } from "@blueprintjs/core";
 import { useNavigate } from "react-router-dom";
 import { auth } from "./client";
+import css from "./desk/desk.module.css";
 
 /**
  * Component to render at `/auth/callback`
@@ -24,7 +26,24 @@ function AuthCallback(): React.ReactElement {
         setError(e instanceof Error ? e.message : String(e)),
       );
   }, [navigate]);
-  return <div>{error != null ? error : "Authenticating…"}</div>;
+
+  return (
+    <div className={css.screen}>
+      {error != null ? (
+        <NonIdealState
+          icon="error"
+          title="Sign-in failed"
+          description={error}
+        />
+      ) : (
+        <NonIdealState
+          icon={<Spinner />}
+          title="Authenticating…"
+          description="Returning to Harbor Desk."
+        />
+      )}
+    </div>
+  );
 }
 
 export default AuthCallback;

@@ -1,7 +1,8 @@
 import type { ReactElement } from "react";
-import { ProgressBar, Tag } from "@blueprintjs/core";
 import type { Osdk } from "@osdk/client";
 import { analyst, investigationCase } from "@ontology/sdk";
+import RiskMeter from "./RiskMeter";
+import StatusPip from "./StatusPip";
 import { statusIntent } from "./status";
 import css from "./desk.module.css";
 
@@ -9,40 +10,50 @@ export default function CaseHeader({
   item,
   owner,
   requester,
+  openFindingCount,
 }: {
   item: Osdk.Instance<investigationCase>;
   owner: Osdk.Instance<analyst> | undefined;
   requester: Osdk.Instance<analyst> | undefined;
+  openFindingCount: number;
 }): ReactElement {
   const risk = item.riskScore ?? 0;
 
   return (
-    <header className={css.caseHeader}>
+    <header className={css.caseChrome}>
+      <div className={css.caseEyebrow}>
+        <span className={css.queueId} translate="no">
+          {item.id}
+        </span>
+        <StatusPip intent={statusIntent(item.status)}>
+          {item.status ?? "Unknown"}
+        </StatusPip>
+      </div>
       <div className={css.caseTitleRow}>
         <h1 className={css.caseTitle}>{item.title ?? item.$primaryKey}</h1>
-        <Tag large intent={statusIntent(item.status)}>
-          {item.status ?? "Unknown"}
-        </Tag>
       </div>
       <div className={css.caseMeta}>
-        <span className={css.queueId}>{item.id}</span>
         <span>Owner {owner?.name ?? item.ownerId ?? "—"}</span>
         {item.closeRequestedById != null && item.closeRequestedById !== "" && (
-          <span>Close requested by {requester?.name ?? item.closeRequestedById}</span>
+          <span>
+            Close requested by {requester?.name ?? item.closeRequestedById}
+          </span>
         )}
+        <span>
+          {openFindingCount} open finding{openFindingCount === 1 ? "" : "s"}
+        </span>
       </div>
       {item.summary != null && item.summary !== "" && (
-        <p className={css.findingBody}>{item.summary}</p>
+        <p className={css.caseSummary}>{item.summary}</p>
       )}
-      <div className={css.riskRow}>
-        <span className={css.riskLabel}>Risk</span>
-        <ProgressBar
-          animate={false}
-          stripes={false}
-          intent={risk >= 50 ? "warning" : "primary"}
-          value={Math.min(1, risk / 100)}
-        />
-        <span className={css.riskValue}>{risk}</span>
+      <div className={css.riskBlock}>
+        <div className={css.row}>
+          <span className={css.riskLabel}>Risk</span>
+          <RiskMeter value={risk} size="full" />
+        </div>
+        <p className={css.riskCaption}>
+          Open findings raise this. Mitigate to drop. Close blocked above 0.
+        </p>
       </div>
     </header>
   );

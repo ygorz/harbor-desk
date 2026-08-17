@@ -7,7 +7,8 @@ import {
   FormGroup,
   HTMLSelect,
   InputGroup,
-  Tag,
+  NonIdealState,
+  NonIdealStateIconSize,
   TextArea,
 } from "@blueprintjs/core";
 import type { Osdk } from "@osdk/client";
@@ -20,10 +21,31 @@ import {
   resolveFindingAction,
   wallet,
 } from "@ontology/sdk";
-import { useLinks, useOsdkAction, useOsdkObject } from "@osdk/react";
+import { useLinks, useOsdkAction } from "@osdk/react";
 import { useActingAs } from "./ActingAsContext";
-import { errorMessage, FINDING_OPEN, SEVERITIES, severityIntent } from "./status";
+import StatusPip from "./StatusPip";
+import WalletRow from "./WalletRow";
+import {
+  errorMessage,
+  FINDING_OPEN,
+  FINDING_MITIGATED,
+  SEVERITIES,
+  severityIntent,
+  severityRank,
+} from "./status";
+import { showError } from "./toast";
 import css from "./desk.module.css";
+
+function sortFindings(
+  rows: Osdk.Instance<finding>[],
+): Osdk.Instance<finding>[] {
+  return [...rows].sort((left, right) => {
+    const leftOpen = left.status === FINDING_OPEN ? 0 : 1;
+    const rightOpen = right.status === FINDING_OPEN ? 0 : 1;
+    if (leftOpen !== rightOpen) return leftOpen - rightOpen;
+    return severityRank(left.severity) - severityRank(right.severity);
+  });
+}
 
 function WalletSelect({
   wallets,
@@ -40,6 +62,7 @@ function WalletSelect({
     <FormGroup label="Wallet (optional)" labelFor="finding-wallet">
       <HTMLSelect
         id="finding-wallet"
+        autoComplete="off"
         value={value}
         onChange={(event) => {
           const id = event.currentTarget.value;
@@ -101,23 +124,17 @@ function AddFindingDialog({
   item,
   isOpen,
   onClose,
-  onError,
 }: {
   item: Osdk.Instance<investigationCase>;
   isOpen: boolean;
   onClose: () => void;
-  onError: (message: string | undefined) => void;
 }): ReactElement {
   const { actingAs } = useActingAs();
   const addAction = useOsdkAction(addFindingAction);
-  const { object: subjectPerson } = useOsdkObject(person, item.personId ?? "", {
-    enabled: item.personId != null && item.personId !== "",
-  });
-  const { object: subjectOrganization } = useOsdkObject(
-    organization,
-    item.organizationId ?? "",
-    { enabled: item.organizationId != null && item.organizationId !== "" },
-  );
+  const { links: people } = useLinks(item, "subjectPerson", { pageSize: 1 });
+  const { links: orgs } = useLinks(item, "subjectOrganization", { pageSize: 1 });
+  const subjectPerson = people?.find(Boolean);
+  const subjectOrganization = orgs?.find(Boolean);
 
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -128,10 +145,9 @@ function AddFindingDialog({
 
   async function submit(): Promise<void> {
     if (actingAs == null) {
-      onError("Select an analyst first.");
+      showError("Select an analyst first.");
       return;
     }
-    onError(undefined);
     try {
       await addAction.applyAction({
         caseToUpdate: item,
@@ -151,17 +167,20 @@ function AddFindingDialog({
       setRelatedWallet(undefined);
       onClose();
     } catch (caught) {
-      onError(errorMessage(caught));
+      showError(errorMessage(caught));
     }
   }
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title="Add finding">
+    <Dialog isOpen={isOpen} onClose={onClose} title="Add Finding">
       <DialogBody>
         <div className={css.stack}>
           <FormGroup label="Title" labelFor="finding-title">
             <InputGroup
               id="finding-title"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="Treasury hop via intermediate…"
               value={title}
               onChange={(event) => setTitle(event.currentTarget.value)}
             />
@@ -169,6 +188,7 @@ function AddFindingDialog({
           <FormGroup label="Severity" labelFor="finding-severity">
             <HTMLSelect
               id="finding-severity"
+              autoComplete="off"
               value={severity}
               onChange={(event) => setSeverity(event.currentTarget.value)}
             >
@@ -198,6 +218,7 @@ function AddFindingDialog({
               id="finding-body"
               fill
               rows={5}
+              placeholder="What did you observe, and why does it matter for this file?"
               value={body}
               onChange={(event) => setBody(event.currentTarget.value)}
             />
@@ -214,7 +235,132 @@ function AddFindingDialog({
               disabled={title.trim() === "" || actingAs == null}
               onClick={() => void submit()}
             >
-              Add finding
+              Add Finding
+            </Button>
+          </>
+        }
+      />
+    </Dialog>
+  );
+}
+
+function FindingWallet({
+  item,
+}: {
+  item: Osdk.Instance<finding>;
+}): ReactElement | null {
+  const { links } = useLinks(item, "relatedWallet", { pageSize: 1 });
+  const related = links?.find(Boolean);
+  if (related == null) return null;
+  return <WalletRow item={related} />;
+}
+
+function FindingMitigation({
+  item,
+}: {
+  item: Osdk.Instance<finding>;
+}): ReactElement | null {
+  const hasNote = item.mitigationNote != null && item.mitigationNote !== "";
+  const hasResolver = item.resolvedById != null && item.resolvedById !== "";
+  const { links } = useLinks(item, "resolvedBy", {
+    pageSize: 1,
+    enabled: hasResolver,
+  });
+  if (!hasNote && !hasResolver) return null;
+  const resolver = links?.find(Boolean);
+
+  return (
+    <div className={css.findingMitigation}>
+      {hasResolver && (
+        <span className={css.findingMitigationBy}>
+          Mitigated by {resolver?.name ?? item.resolvedById}
+        </span>
+      )}
+      {hasNote && (
+        <p className={css.findingMitigationNote}>{item.mitigationNote}</p>
+      )}
+    </div>
+  );
+}
+
+function ResolveFindingDialog({
+  item,
+  findingToResolve,
+  isOpen,
+  onClose,
+}: {
+  item: Osdk.Instance<investigationCase>;
+  findingToResolve: Osdk.Instance<finding> | undefined;
+  isOpen: boolean;
+  onClose: () => void;
+}): ReactElement {
+  const { actingAs } = useActingAs();
+  const resolveAction = useOsdkAction(resolveFindingAction);
+  const [note, setNote] = useState("");
+
+  function close(): void {
+    setNote("");
+    onClose();
+  }
+
+  async function submit(): Promise<void> {
+    if (actingAs == null) {
+      showError("Select an analyst first.");
+      return;
+    }
+    if (findingToResolve == null) {
+      return;
+    }
+    try {
+      await resolveAction.applyAction({
+        findingToResolve,
+        caseToUpdate: item,
+        actingAnalyst: actingAs,
+        mitigationNote: note,
+      });
+      close();
+    } catch (caught) {
+      showError(errorMessage(caught));
+    }
+  }
+
+  return (
+    <Dialog isOpen={isOpen} onClose={close} title="Resolve Finding">
+      <DialogBody>
+        <div className={css.stack}>
+          {findingToResolve != null && (
+            <p className={css.muted}>{findingToResolve.title}</p>
+          )}
+          <p className={css.muted}>
+            Resolving as {actingAs?.name ?? "an analyst"}
+          </p>
+          <FormGroup label="Why this is mitigated" labelFor="finding-mitigation">
+            <TextArea
+              id="finding-mitigation"
+              fill
+              rows={4}
+              placeholder="Counsel confirmed this is a standard registered-agent product."
+              value={note}
+              onChange={(event) => setNote(event.currentTarget.value)}
+            />
+          </FormGroup>
+        </div>
+      </DialogBody>
+      <DialogFooter
+        actions={
+          <>
+            <Button onClick={close}>Cancel</Button>
+            <Button
+              intent="primary"
+              loading={resolveAction.isPending}
+              disabled={
+                note.trim() === "" ||
+                actingAs == null ||
+                findingToResolve == null
+              }
+              onClick={() => void submit()}
+            >
+              Resolve Finding
             </Button>
           </>
         }
@@ -225,33 +371,33 @@ function AddFindingDialog({
 
 function FindingCard({
   item,
-  resolvingId,
   onResolve,
 }: {
   item: Osdk.Instance<finding>;
-  resolvingId: string | undefined;
-  onResolve: (row: Osdk.Instance<finding>) => Promise<void>;
+  onResolve: (row: Osdk.Instance<finding>) => void;
 }): ReactElement {
   const open = item.status === FINDING_OPEN;
 
   return (
-    <article className={css.card}>
+    <article
+      className={`${css.finding} ${open ? "" : css.findingMitigated}`}
+      data-severity={item.severity ?? "Low"}
+    >
       <div className={css.findingHead}>
-        <strong>{item.title}</strong>
+        <h3 className={css.findingTitle}>{item.title}</h3>
         <div className={css.row}>
-          <Tag minimal intent={severityIntent(item.severity)}>
-            {item.severity}
-          </Tag>
-          <Tag minimal intent={open ? "warning" : "success"}>
-            {item.status}
-          </Tag>
+          <StatusPip intent={severityIntent(item.severity)}>
+            {item.severity ?? "Low"}
+          </StatusPip>
+          <StatusPip intent={open ? "warning" : "success"}>
+            {item.status ?? FINDING_MITIGATED}
+          </StatusPip>
           {open && (
             <Button
               size="small"
               variant="minimal"
               intent="primary"
-              loading={resolvingId === item.$primaryKey}
-              onClick={() => void onResolve(item)}
+              onClick={() => onResolve(item)}
             >
               Resolve
             </Button>
@@ -261,80 +407,75 @@ function FindingCard({
       {item.body != null && item.body !== "" && (
         <p className={css.findingBody}>{item.body}</p>
       )}
-      {item.walletId != null && item.walletId !== "" && (
-        <span className={css.queueId}>Wallet {item.walletId}</span>
-      )}
+      <FindingWallet item={item} />
+      {!open && <FindingMitigation item={item} />}
     </article>
   );
 }
 
 export default function FindingsList({
   item,
-  onError,
+  findings,
+  findingsLoading,
 }: {
   item: Osdk.Instance<investigationCase>;
-  onError: (message: string | undefined) => void;
+  findings: Osdk.Instance<finding>[];
+  findingsLoading: boolean;
 }): ReactElement {
-  const { actingAs } = useActingAs();
-  const { links, isLoading } = useLinks(item, "caseFindings", { pageSize: 50 });
-  const resolveAction = useOsdkAction(resolveFindingAction);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [resolvingId, setResolvingId] = useState<string>();
+  const [resolving, setResolving] = useState<Osdk.Instance<finding>>();
 
-  const rows = links?.filter(Boolean) ?? [];
-
-  async function resolve(row: Osdk.Instance<finding>): Promise<void> {
-    if (actingAs == null) {
-      onError("Select an analyst first.");
-      return;
-    }
-    onError(undefined);
-    setResolvingId(String(row.$primaryKey));
-    try {
-      await resolveAction.applyAction({
-        findingToResolve: row,
-        caseToUpdate: item,
-        actingAnalyst: actingAs,
-      });
-    } catch (caught) {
-      onError(errorMessage(caught));
-    } finally {
-      setResolvingId(undefined);
-    }
-  }
+  const rows = sortFindings(findings);
+  const openCount = rows.filter((row) => row.status === FINDING_OPEN).length;
+  const mitigatedCount = rows.length - openCount;
 
   return (
     <section className={css.section} aria-labelledby="findings-heading">
-      <div className={css.queueItemTop}>
+      <div className={css.sectionHead}>
         <h2 id="findings-heading" className={css.sectionTitle}>
           Findings
         </h2>
-        <Button
-          size="small"
-          icon="plus"
-          intent="primary"
-          onClick={() => setDialogOpen(true)}
-        >
-          Add finding
-        </Button>
+        <div className={css.row}>
+          <span className={css.sectionMeta}>
+            {openCount} open · {mitigatedCount} mitigated
+          </span>
+          <Button
+            size="small"
+            icon="plus"
+            intent="primary"
+            onClick={() => setDialogOpen(true)}
+          >
+            Add Finding
+          </Button>
+        </div>
       </div>
-      {isLoading && <p className={css.brandMark}>Loading findings…</p>}
-      {!isLoading && rows.length === 0 && (
-        <div className={css.card}>No findings yet.</div>
+      {findingsLoading && <p className={css.muted}>Loading findings…</p>}
+      {!findingsLoading && rows.length === 0 && (
+        <NonIdealState
+          icon="document"
+          iconSize={NonIdealStateIconSize.SMALL}
+          layout="horizontal"
+          title="No findings yet"
+          description="Add the first observation on this file."
+        />
       )}
       {rows.map((row) => (
         <FindingCard
           key={row.$primaryKey}
           item={row}
-          resolvingId={resolvingId}
-          onResolve={resolve}
+          onResolve={setResolving}
         />
       ))}
       <AddFindingDialog
         item={item}
         isOpen={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        onError={onError}
+      />
+      <ResolveFindingDialog
+        item={item}
+        findingToResolve={resolving}
+        isOpen={resolving != null}
+        onClose={() => setResolving(undefined)}
       />
     </section>
   );

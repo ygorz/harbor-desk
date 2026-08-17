@@ -31,7 +31,7 @@ type OntologyEdit =
 
 /**
  * Writes the Northwind graph. Seed does this locally; this action does it
- * after deploy, where seed never runs.
+ * after deploy, where seed never runs. Idempotent on CASE-2041.
  */
 async function loadDemoScenario(client: Client): Promise<OntologyEdit[]> {
     const existing = await client(investigationCase).fetchOneWithErrors(DEMO_CASE_ID);
@@ -43,6 +43,7 @@ async function loadDemoScenario(client: Client): Promise<OntologyEdit[]> {
 
     const batch = createEditBatch<OntologyEdit>(client);
 
+    // FK order: parties, then interests and wallets, then cases, then findings.
     for (const row of analysts) {
         batch.create(analyst, { ...row });
     }

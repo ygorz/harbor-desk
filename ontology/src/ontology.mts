@@ -12,6 +12,10 @@ import type {
 } from "@osdk/maker";
 import { defineFunctionBackedAction } from "@osdk/maker-experimental";
 
+// =============================================================================
+// Helpers
+// =============================================================================
+
 const optionalString = {
     type: "string" as const,
     nullability: { noNulls: false, noEmptyCollections: false },
@@ -30,6 +34,10 @@ const hiddenFk = (
     visibility: "HIDDEN" as const,
     ...(optional ? { nullability: optionalString.nullability } : {}),
 });
+
+// =============================================================================
+// Shared property types
+// =============================================================================
 
 const nameProperty = defineSharedPropertyType({
     apiName: "name",
@@ -51,6 +59,10 @@ const notesProperty = defineSharedPropertyType({
     displayName: "Notes",
     description: "Free-text context. Relationships belong on links, not only here.",
 });
+
+// =============================================================================
+// Interfaces
+// =============================================================================
 
 /**
  * Taxonomic interface for case subjects. Person and Organization implement it.
@@ -80,6 +92,10 @@ const investigatableMapping = [
     { interfaceProperty: "jurisdiction", mapsTo: "jurisdiction" },
     { interfaceProperty: "notes", mapsTo: "notes" },
 ];
+
+// =============================================================================
+// Object types
+// =============================================================================
 
 export const HarborAnalyst: ObjectTypeDefinition = defineObject({
     apiName: "analyst",
@@ -316,7 +332,7 @@ export const HarborFinding: ObjectTypeDefinition = defineObject({
     displayName: "Finding",
     pluralDisplayName: "Findings",
     description:
-        "Object-backed evidence on a case (severity, status, body). Open findings block close.",
+        "Object-backed evidence on a case. Open findings block close. resolveFinding writes mitigationNote and resolvedBy.",
     titlePropertyApiName: "title",
     primaryKeyPropertyApiName: "id",
     icon: { locator: "search", color: "#C87619" },
@@ -346,6 +362,18 @@ export const HarborFinding: ObjectTypeDefinition = defineObject({
             displayName: "Status",
             description: "Open or Mitigated. Open findings block close.",
         },
+        mitigationNote: {
+            type: longTextType,
+            displayName: "Mitigation note",
+            description:
+                "Why this finding was mitigated. Written by resolveFinding. Empty while Open.",
+            nullability: optionalString.nullability,
+        },
+        resolvedById: hiddenFk(
+            "Resolved by",
+            true,
+            "Analyst who mitigated this finding. Hidden; use resolvedBy.",
+        ),
         caseId: hiddenFk(
             "Case",
             false,
@@ -406,6 +434,10 @@ export const HarborOwnershipInterest: ObjectTypeDefinition = defineObject({
     includeEmptyBackingDatasource: true,
 });
 
+// =============================================================================
+// Link types
+// =============================================================================
+
 /** Analyst who owns the case ↔ that analyst's assigned cases. */
 export const assignedCases: LinkType = defineLink({
     apiName: "assignedCases",
@@ -449,6 +481,29 @@ export const closeRequestedCases: LinkType = defineLink({
         },
     },
     manyForeignKeyProperty: "closeRequestedById",
+    editsEnabled: true,
+});
+
+/** Analyst who mitigated a finding ↔ that analyst's resolved findings. */
+export const resolvedFindings: LinkType = defineLink({
+    apiName: "resolvedFindings",
+    one: {
+        object: HarborAnalyst,
+        metadata: {
+            apiName: "resolvedFindings",
+            displayName: "Resolved finding",
+            pluralDisplayName: "Resolved findings",
+        },
+    },
+    toMany: {
+        object: HarborFinding,
+        metadata: {
+            apiName: "resolvedBy",
+            displayName: "Resolved by",
+            pluralDisplayName: "Resolved by",
+        },
+    },
+    manyForeignKeyProperty: "resolvedById",
     editsEnabled: true,
 });
 
@@ -681,6 +736,10 @@ export const organizationOwnership: LinkType = defineLink({
     manyForeignKeyProperty: "organizationId",
     editsEnabled: true,
 });
+
+// =============================================================================
+// Actions
+// =============================================================================
 
 export const openCaseAction: ActionType = defineFunctionBackedAction({
     functionApiName: "openCase",

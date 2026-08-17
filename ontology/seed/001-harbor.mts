@@ -137,9 +137,11 @@ export default createSeed((seed) => {
     seed.add(finding, {
         id: "FIND-2041-3",
         title: "Registered agent is a mass-formation service",
-        body: "The Delaware registered agent appears on several hundred same-week formations. Noted and mitigated after counsel confirmed it is a standard registered-agent product.",
+        body: "The Delaware registered agent appears on several hundred same-week formations.",
         severity: "Medium",
         status: "Mitigated",
+        mitigationNote: "Counsel confirmed it is a standard registered-agent product.",
+        resolvedById: "ANALYST-MAYA",
         caseId: "CASE-2041",
         organizationId: "ORG-NORTHWIND",
     });
@@ -175,9 +177,11 @@ export default createSeed((seed) => {
     seed.add(finding, {
         id: "FIND-1902-1",
         title: "Correspondent-bank narrative filed",
-        body: "Clearstream Payments could not source funds for a £1.8m corridor payment. SAR filed; independent reviewer approved close.",
+        body: "Clearstream Payments could not source funds for a £1.8m corridor payment.",
         severity: "High",
         status: "Mitigated",
+        mitigationNote: "SAR narrative filed with the correspondent bank.",
+        resolvedById: "ANALYST-JORDAN",
         caseId: "CASE-1902",
         organizationId: "ORG-CLEARSTREAM",
     });

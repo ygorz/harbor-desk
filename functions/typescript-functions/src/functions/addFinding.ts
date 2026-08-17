@@ -1,6 +1,7 @@
 import { analyst, finding, investigationCase, organization, person, wallet } from "@ontology/sdk";
 import { Client, Osdk } from "@osdk/client";
 import { createEditBatch, Edits, UserFacingError } from "@osdk/functions";
+import { objectId, optionalObjectId } from "../lib/ids.js";
 import {
     cappedRisk,
     FINDING_OPEN,
@@ -10,18 +11,6 @@ import {
 } from "../lib/policy.js";
 
 type OntologyEdit = Edits.Object<typeof finding> | Edits.Object<typeof investigationCase>;
-
-function optionalPk(
-    row: Osdk.Instance<person> | Osdk.Instance<organization> | Osdk.Instance<wallet> | undefined,
-): string | undefined {
-    if (row == null) {
-        return undefined;
-    }
-    if ("id" in row && row.id != null && String(row.id) !== "") {
-        return String(row.id);
-    }
-    return String(row.$primaryKey);
-}
 
 /**
  * Adds a finding and recomputes case.riskScore. Escalates Open → In review at 50.
@@ -52,9 +41,9 @@ function addFinding(
         (caseToUpdate.riskScore ?? 0) + severityWeight(severity),
     );
     const nextStatus = statusAfterRisk(caseToUpdate.status, nextScore);
-    const personId = optionalPk(relatedPerson);
-    const organizationId = optionalPk(relatedOrganization);
-    const walletId = optionalPk(relatedWallet);
+    const personId = optionalObjectId(relatedPerson);
+    const organizationId = optionalObjectId(relatedOrganization);
+    const walletId = optionalObjectId(relatedWallet);
 
     const batch = createEditBatch<OntologyEdit>(client);
     batch.create(finding, {
@@ -63,7 +52,7 @@ function addFinding(
         body: body.trim(),
         severity,
         status: FINDING_OPEN,
-        caseId: caseToUpdate.id ?? String(caseToUpdate.$primaryKey),
+        caseId: objectId(caseToUpdate),
         ...(personId != null ? { personId } : {}),
         ...(organizationId != null ? { organizationId } : {}),
         ...(walletId != null ? { walletId } : {}),

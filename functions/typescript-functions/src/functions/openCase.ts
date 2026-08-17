@@ -1,6 +1,7 @@
 import { analyst, investigationCase, organization, person } from "@ontology/sdk";
 import { Client, Osdk } from "@osdk/client";
 import { createEditBatch, Edits, UserFacingError } from "@osdk/functions";
+import { objectId } from "../lib/ids.js";
 import {
     isActiveCase,
     SEVERITY_MEDIUM,
@@ -9,14 +10,8 @@ import {
 
 type OntologyEdit = Edits.Object<typeof investigationCase>;
 
-function primaryKey(
-    row: Osdk.Instance<person> | Osdk.Instance<organization> | Osdk.Instance<analyst>,
-): string {
-    if (row.id != null && row.id !== "") {
-        return String(row.id);
-    }
-    return String(row.$primaryKey);
-}
+const EXACTLY_ONE_SUBJECT =
+    "Open a case on exactly one person or one organization.";
 
 /**
  * Opens a case on exactly one person or organization. status, severity, and
@@ -32,40 +27,27 @@ async function openCase(
         throw new UserFacingError("Select an analyst before opening a case.");
     }
 
-    if (subjectPerson != null && subjectOrganization != null) {
-        throw new UserFacingError(
-            "Open a case on exactly one person or one organization.",
-        );
-    }
-    if (subjectPerson == null && subjectOrganization == null) {
-        throw new UserFacingError(
-            "Open a case on exactly one person or one organization.",
-        );
+    if ((subjectPerson != null) === (subjectOrganization != null)) {
+        throw new UserFacingError(EXACTLY_ONE_SUBJECT);
     }
 
-    let subjectId: string;
-    let title: string;
-    if (subjectPerson != null) {
-        subjectId = primaryKey(subjectPerson);
-        title = subjectPerson.name ?? subjectId;
-    } else if (subjectOrganization != null) {
-        subjectId = primaryKey(subjectOrganization);
-        title = subjectOrganization.name ?? subjectId;
-    } else {
-        throw new UserFacingError(
-            "Open a case on exactly one person or one organization.",
-        );
-    }
+    const subjectId =
+        subjectPerson != null
+            ? objectId(subjectPerson)
+            : objectId(subjectOrganization!);
+    const title =
+        (subjectPerson != null ? subjectPerson.name : subjectOrganization!.name) ??
+        subjectId;
 
+    // First page covers the demo queue. Not a query-by-subject.
     const existing = await client(investigationCase).fetchPage({ $pageSize: 50 });
     const alreadyActive = existing.data.some((item) => {
         if (!isActiveCase(item.status)) {
             return false;
         }
-        if (subjectPerson != null) {
-            return item.personId === subjectId;
-        }
-        return item.organizationId === subjectId;
+        return subjectPerson != null
+            ? item.personId === subjectId
+            : item.organizationId === subjectId;
     });
     if (alreadyActive) {
         throw new UserFacingError(`${title} already has an open case.`);
@@ -79,7 +61,7 @@ async function openCase(
         severity: SEVERITY_MEDIUM,
         riskScore: 0,
         summary: "",
-        ownerId: primaryKey(actingAnalyst),
+        ownerId: objectId(actingAnalyst),
         ...(subjectPerson != null
             ? { personId: subjectId }
             : { organizationId: subjectId }),

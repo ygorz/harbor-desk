@@ -1,6 +1,7 @@
 import { analyst, investigationCase } from "@ontology/sdk";
 import { Client, Osdk } from "@osdk/client";
 import { createEditBatch, Edits, UserFacingError } from "@osdk/functions";
+import { objectId } from "../lib/ids.js";
 import { STATUS_CLOSED, STATUS_PENDING_CLOSE } from "../lib/policy.js";
 
 type OntologyEdit = Edits.Object<typeof investigationCase>;
@@ -39,7 +40,7 @@ function requestClose(
     const batch = createEditBatch<OntologyEdit>(client);
     batch.update(caseToClose, {
         status: STATUS_PENDING_CLOSE,
-        closeRequestedById: actingAnalyst.id ?? String(actingAnalyst.$primaryKey),
+        closeRequestedById: objectId(actingAnalyst),
     });
     return batch.getEdits();
 }

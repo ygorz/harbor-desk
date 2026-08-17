@@ -38,16 +38,7 @@ pnpm run dev
 
 App: http://localhost:8080 (or the port the CLI prints). Seed loads Northwind on every ontology start.
 
-### Demo script (~90 seconds)
-
-1. Queue shows **Northwind — treasury funding** at risk 65, status In review.
-2. Open it: LLC, Elena Varga’s personal wallet, treasury wallet, two open findings.
-3. Add a finding — risk jumps.
-4. **Request close** as Maya — error: open findings.
-5. Resolve open findings until risk is 0.
-6. Request close as Maya — Pending close.
-7. Stay Maya, **Approve close** — error: four-eyes.
-8. Switch acting-as to Jordan Hale, approve — Closed.
+Spoken walkthrough (about a minute, for a recruiter or a first look): [docs/demo-script.md](./docs/demo-script.md).
 
 ## Learn more
 
