@@ -1,5 +1,12 @@
 # Harbor Desk
 
+[![MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Palantir Foundry](https://img.shields.io/badge/Palantir-Foundry-000000?logo=palantir&logoColor=white)
+![SuperRepo](https://img.shields.io/badge/SuperRepo-beta-2563eb)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![ontology-as-code](https://img.shields.io/badge/ontology--as--code-111827)
+
 Built by George Gorzhiyev as a Palantir Foundry **SuperRepo** case study: ontology-as-code, TypeScript policy functions, and a React investigation desk in one repo.
 
 Harbor Desk is a financial-crime casework desk. Analysts open a case on a person or an organization, attach findings, and close the file only when every open finding is resolved and a **second analyst** approves.
