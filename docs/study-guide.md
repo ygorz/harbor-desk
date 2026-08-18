@@ -239,7 +239,7 @@ When adding a feature, follow the dependency order: **ontology, then function, t
 |---|---|---|
 | `components` | ontology, functions, app | What preview, bundle, and deploy include |
 | `bundle.name` | `harbor-desk` | Marketplace product name |
-| `bundle.mavenCoordinate` | `com.harbordesk:harbor-desk` | Product identity in the store |
+| `bundle.mavenCoordinate` | store coordinate in `foundry.yml` (`…:harbor-desk`) | Product identity in the store. This is the `foundry create` value; changing it is a new Marketplace product. |
 | `bundle.installMode` | `SINGLETON` | Palantir’s default; once per Ontology (see §2.4) |
 | `osdkOutput` | `ontology/osdk-output` | Where codegen writes the client |
 | `apiNamespace` | `com.harbordesk` | Namespace for generated ontology APIs |
@@ -509,7 +509,7 @@ The functions runtime is a local process during preview (`foundry start typescri
 
 Functions in SuperRepo **cannot call APIs outside the Palantir platform** today. Classic Foundry functions still go through [Data Connection webhooks](https://www.palantir.com/docs/foundry/data-connection/external-functions/), not raw `fetch`. SuperRepo cannot declare those sources yet. Until that lands, ingest lives in Data Connection, a transform repo, or a compute module — outside this SuperRepo.
 
-The functions npm package is `@harbordesk/functions` (Marketplace identity is still `com.harbordesk:harbor-desk`).
+The functions npm package is `@harbordesk/functions`. Marketplace identity is `bundle.mavenCoordinate` in `foundry.yml`. The ontology API namespace is `com.harbordesk`.
 
 ---
 
@@ -820,7 +820,7 @@ For a production investigation desk, the sound hybrid is: **classic Foundry owns
 - SuperRepo may not be enabled. Beta flag / enrollment support is required.
 - Object / link / action quotas (community-reported ~60 each) are enrollment-wide. Harbor Desk adds seven types, thirteen links, six actions. If an older install still has `entity`, delete it before upgrade.
 - DevOps publishing permission is required on the **user** for `foundry deploy` from your laptop (the token itself is unscoped).
-- `mavenCoordinate: com.harbordesk:harbor-desk` is the durable product name. Do not revert it to the `foundry create` timestamp.
+- `mavenCoordinate` in `foundry.yml` is the Marketplace product identity (the `foundry create` store coordinate, artifact `harbor-desk`). Do not change it unless you mean to publish a new product.
 - Keep Harbor Desk in a sandbox Project even though it can share an Ontology with other work.
 
 ---
