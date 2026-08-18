@@ -6,7 +6,9 @@ import {
     cappedRisk,
     FINDING_MITIGATED,
     FINDING_OPEN,
+    isFindingsFrozen,
     severityWeight,
+    STATUS_CLOSED,
 } from "../lib/policy.js";
 
 type OntologyEdit = Edits.Object<typeof finding> | Edits.Object<typeof investigationCase>;
@@ -24,6 +26,16 @@ function resolveFinding(
 ): OntologyEdit[] {
     if (actingAnalyst == null) {
         throw new UserFacingError("Select an analyst before resolving a finding.");
+    }
+    if (isFindingsFrozen(caseToUpdate.status)) {
+        throw new UserFacingError(
+            caseToUpdate.status === STATUS_CLOSED
+                ? "Closed cases cannot change findings."
+                : "Cannot resolve findings while a close is waiting for four-eyes.",
+        );
+    }
+    if (String(findingToResolve.caseId ?? "") !== objectId(caseToUpdate)) {
+        throw new UserFacingError("That finding does not belong to this case.");
     }
     if (findingToResolve.status !== FINDING_OPEN) {
         throw new UserFacingError(

@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { Button, NonIdealState } from "@blueprintjs/core";
 import { Navigate, useOutletContext } from "react-router-dom";
 import type { DeskOutletContext } from "./AppShell";
-import { HERO_CASE_ID } from "./status";
+import { HERO_CASE_ID, STATUS_CLOSED } from "./status";
 import css from "./desk.module.css";
 
 function WorkspaceSkeleton(): ReactElement {
@@ -32,6 +32,15 @@ export default function QueueHome(): ReactElement {
     return <Navigate to={`/cases/${hero.$primaryKey}`} replace />;
   }
 
+  if (cases.length > 0) {
+    const open = cases.filter((item) => item.status !== STATUS_CLOSED);
+    const pool = open.length > 0 ? open : cases;
+    const pick = [...pool].sort(
+      (left, right) => (right.riskScore ?? 0) - (left.riskScore ?? 0),
+    )[0];
+    return <Navigate to={`/cases/${pick.$primaryKey}`} replace />;
+  }
+
   return (
     <div className={css.empty}>
       <NonIdealState
@@ -46,7 +55,7 @@ export default function QueueHome(): ReactElement {
               loading={loadDemoPending}
               onClick={() => void onLoadDemo()}
             >
-              Load Demo
+              Load demo
             </Button>
           ) : undefined
         }

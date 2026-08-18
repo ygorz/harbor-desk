@@ -1,7 +1,5 @@
 # Ontology design, with Harbor Desk as the example
 
-> This guide was prepared with AI assistance and reviewed against Palantir documentation and the Harbor Desk source. Care was taken to keep it accurate; the platform moves quickly, so small errors may remain. When something matters, prefer the official pages linked at the end.
-
 This guide is about **how Palantir wants you to design an Ontology**: what exists, how it changes, and how to keep the model honest as it grows. Harbor Desk is the worked example. You do not need to run the app to read this.
 
 How SuperRepo packages that Ontology with TypeScript functions and a React desk — local preview, the generated client, deploy — lives in the [study guide](./study-guide.md).
@@ -170,7 +168,7 @@ Harbor Desk’s `riskScore` is a **stored rollup** of open-finding weights, not 
 
 - Critical 40, High 25, Medium 12, Low 5, capped at 100
 - Written by `addFinding` and `resolveFinding`
-- `requestClose` trusts it (`riskScore > 0` ⇒ refuse)
+- `requestClose` enumerates Open findings on the case (so a drifted score cannot trap close). The stored integer still drives the desk meter.
 - The property `description` in `ontology.mts` says so
 
 Palantir’s preferred tool for this value is a [derived property](https://www.palantir.com/docs/foundry/object-link-types/derived-properties): query-time, read-only, computed from linked objects (here, open finding weights via `caseFindings`). Derived properties are in beta. They are not a pipeline. Maker declares them as a `{ type: "derived" }` datasource alongside a dataset, not as a transform.
@@ -352,10 +350,10 @@ Harbor Desk kinetic surface:
 | Action | Business operation | Policy in the function |
 |---|---|---|
 | Open case | Open a file on exactly one subject | XOR person/org; no second active case on that subject; status Open, risk 0 |
-| Add finding | Attach evidence | Closed cases refuse; title required; bump `riskScore`; maybe Open → In review |
-| Resolve finding | Mitigate evidence | Only `Open` findings; require a mitigation note; write `resolvedBy`; lower `riskScore` |
-| Request close | Analyst asks to close | Not Closed / Pending close; `riskScore` must be 0 |
-| Approve close | Four-eyes | Must be Pending close; actor ≠ requester |
+| Add finding | Attach evidence | Closed and Pending close refuse; title required; known severity; bump `riskScore`; maybe Open → In review |
+| Resolve finding | Mitigate evidence | Case not frozen; finding belongs to the case; require a mitigation note; write `resolvedBy`; lower `riskScore` |
+| Request close | Analyst asks to close | Not Closed / Pending close; any Open finding on the case refuses |
+| Approve close | Four-eyes | Must be Pending close; requester must be set; actor ≠ requester |
 | Load demo | Bootstrap after deploy | Experimental. Seed never deploys |
 
 Generated CRUD (`defineCreateObjectAction` / modify / delete) is fine when there is **no** policy. Harbor Desk did not emit `Set Case Status`. Status is only written by functions.
@@ -382,7 +380,7 @@ Read-only functions (queries) exist in the OSDK. Harbor Desk has none. Policy is
 
 Security and business rules belong at the Ontology layer, not in ad-hoc app filters. If Workshop, AIP, or a second app call `requestClose`, they must hit the same wall.
 
-Harbor Desk’s ClosePath disables buttons for UX and states the gate (open findings, same analyst). `requestClose` still checks `riskScore`. A caller that skips the UI still fails. That is the point: **the product is the policy**; the UI is a client.
+Harbor Desk’s ClosePath leaves Request close and Approve close clickable so the function can refuse; hints state the gate. `requestClose` enumerates Open findings on the case. A caller that skips the UI still fails. That is the point: **the product is the policy**; the UI is a client.
 
 Acting-as is a local stand-in for the Foundry user (mock auth has no real user). Four-eyes compares ontology `analyst` objects because there is no real user. On a deployed enrollment, the honest version is: acting analyst = current user, and you stop passing `actingAnalyst` as a spoofable parameter. Until then, the function still enforces “requester ≠ approver” on whatever object it is given.
 

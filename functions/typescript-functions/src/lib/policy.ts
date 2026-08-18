@@ -3,6 +3,8 @@
  * status transitions stay in one place.
  */
 
+import { UserFacingError } from "@osdk/functions";
+
 // =============================================================================
 // Case status
 // =============================================================================
@@ -28,7 +30,16 @@ export const SEVERITY_MEDIUM = "Medium";
 export const SEVERITY_HIGH = "High";
 export const SEVERITY_CRITICAL = "Critical";
 
-const WEIGHTS: Record<string, number> = {
+export const SEVERITIES = [
+    SEVERITY_LOW,
+    SEVERITY_MEDIUM,
+    SEVERITY_HIGH,
+    SEVERITY_CRITICAL,
+] as const;
+
+export type Severity = (typeof SEVERITIES)[number];
+
+const WEIGHTS: Record<Severity, number> = {
     [SEVERITY_CRITICAL]: 40,
     [SEVERITY_HIGH]: 25,
     [SEVERITY_MEDIUM]: 12,
@@ -38,9 +49,32 @@ const WEIGHTS: Record<string, number> = {
 /** Open → In review at this score. CASE-2041 seeds at 65 (Critical + High open). */
 export const REVIEW_THRESHOLD = 50;
 
+export function isKnownSeverity(
+    severity: string | undefined,
+): severity is Severity {
+    return (
+        severity != null && (SEVERITIES as readonly string[]).includes(severity)
+    );
+}
+
+export function assertKnownSeverity(
+    severity: string | undefined,
+): asserts severity is Severity {
+    if (!isKnownSeverity(severity)) {
+        throw new UserFacingError(
+            "Severity must be Low, Medium, High, or Critical.",
+        );
+    }
+}
+
 export function severityWeight(severity: string | undefined): number {
-    if (severity == null) return 0;
-    return WEIGHTS[severity] ?? 0;
+    if (!isKnownSeverity(severity)) return 0;
+    return WEIGHTS[severity];
+}
+
+/** Pending close and Closed cannot gain or lose findings. */
+export function isFindingsFrozen(status: string | undefined): boolean {
+    return status === STATUS_CLOSED || status === STATUS_PENDING_CLOSE;
 }
 
 /** Clamp to 0–100. Writeback types cannot use derived properties. */

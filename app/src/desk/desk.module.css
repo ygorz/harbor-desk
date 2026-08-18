@@ -341,13 +341,14 @@
 .riskBlock {
   display: grid;
   gap: 4px;
-  max-width: 360px;
+  max-width: max-content;
 }
 
 .riskCaption {
   color: var(--hd-text-faint);
   font-size: 12px;
   margin: 0;
+  white-space: nowrap;
 }
 
 .riskMeter {

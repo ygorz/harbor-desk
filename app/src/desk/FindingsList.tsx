@@ -27,13 +27,14 @@ import StatusPip from "./StatusPip";
 import WalletRow from "./WalletRow";
 import {
   errorMessage,
-  FINDING_OPEN,
   FINDING_MITIGATED,
+  FINDING_OPEN,
+  isFindingsFrozen,
   SEVERITIES,
   severityIntent,
   severityRank,
 } from "./status";
-import { showError } from "./toast";
+import { showError, showSuccess } from "./toast";
 import css from "./desk.module.css";
 
 function sortFindings(
@@ -165,6 +166,7 @@ function AddFindingDialog({
       setBody("");
       setSeverity("Medium");
       setRelatedWallet(undefined);
+      showSuccess("Finding added.");
       onClose();
     } catch (caught) {
       showError(errorMessage(caught));
@@ -180,7 +182,7 @@ function AddFindingDialog({
               id="finding-title"
               autoComplete="off"
               spellCheck={false}
-              placeholder="Treasury hop via intermediate…"
+              placeholder="Short title for what you observed"
               value={title}
               onChange={(event) => setTitle(event.currentTarget.value)}
             />
@@ -318,6 +320,7 @@ function ResolveFindingDialog({
         actingAnalyst: actingAs,
         mitigationNote: note,
       });
+      showSuccess("Finding resolved.");
       close();
     } catch (caught) {
       showError(errorMessage(caught));
@@ -339,7 +342,7 @@ function ResolveFindingDialog({
               id="finding-mitigation"
               fill
               rows={4}
-              placeholder="Counsel confirmed this is a standard registered-agent product."
+              placeholder="Why this finding is no longer a concern"
               value={note}
               onChange={(event) => setNote(event.currentTarget.value)}
             />
@@ -371,9 +374,11 @@ function ResolveFindingDialog({
 
 function FindingCard({
   item,
+  canResolve,
   onResolve,
 }: {
   item: Osdk.Instance<finding>;
+  canResolve: boolean;
   onResolve: (row: Osdk.Instance<finding>) => void;
 }): ReactElement {
   const open = item.status === FINDING_OPEN;
@@ -392,7 +397,7 @@ function FindingCard({
           <StatusPip intent={open ? "warning" : "success"}>
             {item.status ?? FINDING_MITIGATED}
           </StatusPip>
-          {open && (
+          {open && canResolve && (
             <Button
               size="small"
               variant="minimal"
@@ -428,6 +433,7 @@ export default function FindingsList({
   const rows = sortFindings(findings);
   const openCount = rows.filter((row) => row.status === FINDING_OPEN).length;
   const mitigatedCount = rows.length - openCount;
+  const frozen = isFindingsFrozen(item.status);
 
   return (
     <section className={css.section} aria-labelledby="findings-heading">
@@ -439,14 +445,16 @@ export default function FindingsList({
           <span className={css.sectionMeta}>
             {openCount} open · {mitigatedCount} mitigated
           </span>
-          <Button
-            size="small"
-            icon="plus"
-            intent="primary"
-            onClick={() => setDialogOpen(true)}
-          >
-            Add Finding
-          </Button>
+          {!frozen && (
+            <Button
+              size="small"
+              icon="plus"
+              intent="primary"
+              onClick={() => setDialogOpen(true)}
+            >
+              Add Finding
+            </Button>
+          )}
         </div>
       </div>
       {findingsLoading && <p className={css.muted}>Loading findings…</p>}
@@ -463,6 +471,7 @@ export default function FindingsList({
         <FindingCard
           key={row.$primaryKey}
           item={row}
+          canResolve={!frozen}
           onResolve={setResolving}
         />
       ))}

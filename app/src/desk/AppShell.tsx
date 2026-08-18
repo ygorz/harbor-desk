@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useMemo, useState, type ReactElement } from "react";
 import {
   Button,
   Dialog,
@@ -27,7 +27,7 @@ import { ActingAsProvider, useActingAs } from "./ActingAsContext";
 import CaseQueue from "./CaseQueue";
 import { initials } from "./format";
 import { errorMessage, HERO_CASE_ID, isActiveCase } from "./status";
-import { showError } from "./toast";
+import { showError, showSuccess } from "./toast";
 import css from "./desk.module.css";
 
 export interface DeskOutletContext {
@@ -69,12 +69,14 @@ function OpenCaseDialog({
   organizations,
   isOpen,
   onClose,
+  onOpened,
 }: {
   cases: Osdk.Instance<investigationCase>[];
   people: Osdk.Instance<person>[];
   organizations: Osdk.Instance<organization>[];
   isOpen: boolean;
   onClose: () => void;
+  onOpened: (subject: SubjectOption) => void;
 }): ReactElement {
   const { actingAs } = useActingAs();
   const openAction = useOsdkAction(openCaseAction);
@@ -116,7 +118,7 @@ function OpenCaseDialog({
       return;
     }
     if (subject == null) {
-      showError("Pick a person or company that does not already have an open case.");
+      showError("Pick a person or organization that does not already have an open case.");
       return;
     }
     try {
@@ -126,6 +128,8 @@ function OpenCaseDialog({
           ? { subjectPerson: subject.object }
           : { subjectOrganization: subject.object }),
       });
+      showSuccess("Case opened.");
+      onOpened(subject);
       closeDialog();
     } catch (caught) {
       showError(errorMessage(caught));
@@ -136,13 +140,13 @@ function OpenCaseDialog({
     <Dialog isOpen={isOpen} onClose={closeDialog} title="Open Case">
       <DialogBody>
         <FormGroup
-          label="Person or company"
+          label="Person or organization"
           labelFor="case-subject"
-          helperText="Opens a file on a person or company that does not already have an active case."
+          helperText="Opens a file on a person or organization that does not already have an active case."
         >
           {available.length === 0 ? (
             <p className={css.muted}>
-              Every person and company already has an open case.
+              Every person and organization already has an open case.
             </p>
           ) : (
             <HTMLSelect
@@ -283,14 +287,33 @@ export default function AppShell(): ReactElement {
   const navigate = useNavigate();
 
   const [openCase, setOpenCase] = useState(false);
-  const caseRows = cases ?? [];
+  const [pendingSubject, setPendingSubject] = useState<SubjectOption>();
+  const caseRows = useMemo(() => cases ?? [], [cases]);
   const demoLoaded = caseRows.some(
     (row) => String(row.id ?? row.$primaryKey) === HERO_CASE_ID,
   );
 
+  useEffect(() => {
+    if (pendingSubject == null) return;
+    const subjectId = String(
+      pendingSubject.object.id ?? pendingSubject.object.$primaryKey,
+    );
+    const created = caseRows.find((item) => {
+      if (!isActiveCase(item.status)) return false;
+      return pendingSubject.kind === "Person"
+        ? item.personId === subjectId
+        : item.organizationId === subjectId;
+    });
+    if (created != null) {
+      void navigate(`/cases/${created.$primaryKey}`);
+      setPendingSubject(undefined);
+    }
+  }, [caseRows, pendingSubject, navigate]);
+
   async function loadDemo(): Promise<void> {
     try {
       await loadAction.applyAction({});
+      showSuccess("Demo loaded.");
       void navigate(`/cases/${HERO_CASE_ID}`);
     } catch (caught) {
       showError(errorMessage(caught));
@@ -343,6 +366,7 @@ export default function AppShell(): ReactElement {
           organizations={organizations}
           isOpen={openCase}
           onClose={() => setOpenCase(false)}
+          onOpened={setPendingSubject}
         />
       </div>
     </ActingAsProvider>

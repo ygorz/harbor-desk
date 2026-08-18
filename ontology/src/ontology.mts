@@ -240,7 +240,7 @@ export const HarborWallet: ObjectTypeDefinition = defineObject({
         label: {
             type: "string",
             displayName: "Label",
-            description: "Human label (Northwind treasury, Varga personal).",
+            description: "Human label (Northwind treasury, Elena Varga — personal).",
         },
         personId: hiddenFk(
             "Person",

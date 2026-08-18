@@ -1,7 +1,5 @@
 # Harbor Desk study guide
 
-> This guide was prepared with AI assistance and reviewed against Palantir documentation and the Harbor Desk source. Care was taken to keep it accurate; the platform moves quickly, so small errors may remain. When something matters, prefer the official pages linked below.
-
 This repository is a **Foundry SuperRepo product** and a teaching artifact. Harbor Desk is a writeback casework desk: analysts open cases, attach findings to people, organizations, and wallets, and close a case only when every open finding is resolved and a second analyst approves.
 
 Walk the product to learn how SuperRepo pieces connect. The same files that ship as a Marketplace product are the curriculum.
@@ -248,7 +246,7 @@ When adding a feature, follow the dependency order: **ontology, then function, t
 | `imports` | lockfile path | Filled when you `foundry import ontology` |
 | `platformApiProxy` | `getCurrent` user | Local-only: which Foundry HTTP APIs preview may proxy |
 
-`signingKeys` points at a local Foundry CLI pem. Leave it. Do not commit a copied key.
+`signingKeys` points at the local Foundry CLI pem from `foundry login` (`~/Library/Application Support/foundry-cli/keys/default.pem` on macOS). It is not a secret. Do not commit the `.pem`. A clone must point this at its own key.
 
 ---
 
@@ -462,12 +460,18 @@ Object parameters go through `objectId` in `lib/ids.ts`: authored `id` if loaded
 Each exported function follows the same shape. `requestClose` is the one to memorize. Abbreviated here (the file also refuses a missing analyst, Closed, and Pending close — see the table):
 
 ```ts
-function requestClose(
+async function requestClose(
     client: Client,
     caseToClose: Osdk.Instance<investigationCase>,
     actingAnalyst: Osdk.Instance<analyst>,
-): OntologyEdit[] {
-    if ((caseToClose.riskScore ?? 0) > 0) {
+): Promise<OntologyEdit[]> {
+    const page = await client(finding).fetchPage({ $pageSize: 50 });
+    const hasOpen = page.data.some(
+        (row) =>
+            row.status === FINDING_OPEN &&
+            String(row.caseId ?? "") === objectId(caseToClose),
+    );
+    if (hasOpen) {
         throw new UserFacingError(
             "Cannot request close while findings are still open. Resolve every open finding first.",
         );
@@ -495,10 +499,10 @@ Read this as:
 | Function | Rule |
 |---|---|
 | `openCase` | Exactly one person or organization; Open / Medium / risk 0 |
-| `addFinding` | Writes the finding, adds severity weight to `riskScore`, may escalate Open → In review |
-| `resolveFinding` | Only `Open` findings; requires a mitigation note; writes `resolvedBy`; subtracts weight |
-| `requestClose` | Refuses Closed / Pending close; refuses while `riskScore > 0` |
-| `approveClose` | Only Pending close; acting analyst cannot equal `closeRequestedById` |
+| `addFinding` | Closed and Pending close refuse; known severity; title required; bump `riskScore`; maybe Open → In review |
+| `resolveFinding` | Case not frozen; finding belongs to the case; mitigation note; write `resolvedBy`; subtract weight |
+| `requestClose` | Refuse Closed / Pending close; refuse while any finding on the case is Open |
+| `approveClose` | Only Pending close; requester must be set; acting analyst cannot equal `closeRequestedById` |
 | `loadDemoScenario` | Writes the Northwind graph if `CASE-2041` is missing |
 
 The functions runtime is a local process during preview (`foundry start typescript-functions`) and a real Foundry function after deploy. Same source file.
@@ -527,7 +531,9 @@ Local mock auth has no Foundry user. Four-eyes still needs two identities, so th
 
 After deploy, real OAuth is the logged-in Foundry user. Acting-as remains the demo’s way to play both sides of four-eyes without creating two Foundry accounts.
 
-The desk is Blueprint dark (`bp6-dark` on `document.documentElement`) with a thin Harbor token layer (`--hd-*` mapped onto `--bp-*` in `app/src/index.css`). Routes: `/` queue, `/cases/:caseId` workspace (case chrome, close path, subject column, findings column). Action failures and copy confirmations use Blueprint `OverlayToaster`, not a layout-shifting callout. **Load demo** is the empty-queue action; seed never deploys, so that button is how a Marketplace install gets CASE-2041.
+The desk is Blueprint dark (`bp6-dark` on `document.documentElement`) with a thin Harbor token layer (`--hd-*` mapped onto `--bp-*` in `app/src/index.css`). Routes: `/` redirects to CASE-2041 when that case exists (otherwise the highest-risk open case, or the empty **Load demo** pane); `/cases/:caseId` is the workspace (case chrome, close path, subject column, findings column). The queue is the left rail on every route. Action failures, copy confirmations, and successful mutations use Blueprint `OverlayToaster`. **Load demo** is the empty-queue action; seed never deploys, so that button is how a Marketplace install gets CASE-2041.
+
+ClosePath leaves **Request close** and **Approve close** clickable so the function can refuse. Hints explain the gate; `UserFacingError` is what the toast shows. Add Finding / Resolve hide when the case is Pending close or Closed; the functions still refuse.
 
 ---
 
@@ -622,7 +628,7 @@ sequenceDiagram
 
   UI->>Action: applyAction caseToClose, actingAnalyst
   Action->>Fn: run function
-  alt riskScore greater than 0
+  alt open findings on the case
     Fn-->>UI: UserFacingError
   else findings resolved
     Fn->>Action: batch.getEdits Pending close
@@ -655,7 +661,7 @@ Policy is in the function. The React form never computes risk.
 ### 10.3 Request close (the interesting refusal)
 
 1. As Maya, click **Request close** while CASE-2041 still has open findings (`riskScore` 65).
-2. `requestClose` throws `UserFacingError`. The rail surfaces the message.
+2. `requestClose` throws `UserFacingError`. The toast surfaces the message.
 3. Resolve open findings until risk is 0. Each `resolveFinding` requires a mitigation note, writes `resolvedBy`, and subtracts weight.
 4. Request close again. The function sets `status: "Pending close"` and `closeRequestedById` to Maya.
 5. Stay Maya, **Approve close**. `approveClose` refuses: same analyst.
@@ -867,11 +873,17 @@ cd app && pnpm run typecheck
 cd app && pnpm run lint
 ```
 
+Policy tests (not part of the Marketplace bundle):
+
+```bash
+cd functions/typescript-functions && pnpm test
+```
+
 ---
 
 ## 18. How to teach from this repo
 
-1. Run `pnpm run dev`. Walk [docs/demo-script.md](./demo-script.md) before opening files.
+1. Run `pnpm run dev`. Open CASE-2041 and click through the desk before opening files.
 2. For each click, name the three layers: ontology type or action, function (if any), React hook.
 3. Trace **Request close** on paper: `ClosePath.tsx` → `requestCloseAction` in `ontology.mts` → `requestClose.ts` → edits applied → `useOsdkObject` refresh.
 4. Re-read section 2 of this guide until Enrollment / Project / Ontology / Marketplace / Developer Console are distinct.

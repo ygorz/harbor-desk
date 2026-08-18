@@ -26,7 +26,12 @@ function approveClose(
 
     const requesterId = caseToClose.closeRequestedById;
     const actorId = objectId(actingAnalyst);
-    if (requesterId != null && requesterId === actorId) {
+    if (requesterId == null || requesterId === "") {
+        throw new UserFacingError(
+            `${caseToClose.title ?? caseToClose.$primaryKey} has no close requester on file. Request close first.`,
+        );
+    }
+    if (requesterId === actorId) {
         throw new UserFacingError(
             `${actingAnalyst.name ?? actorId} requested this close. A second analyst has to approve it.`,
         );

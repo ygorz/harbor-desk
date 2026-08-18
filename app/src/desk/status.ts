@@ -22,6 +22,10 @@ export function isActiveCase(status: string | undefined): boolean {
   );
 }
 
+export function isFindingsFrozen(status: string | undefined): boolean {
+  return status === STATUS_CLOSED || status === STATUS_PENDING_CLOSE;
+}
+
 export function statusIntent(status: string | undefined): Intent {
   switch (status) {
     case STATUS_CLOSED:

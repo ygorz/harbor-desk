@@ -1,20 +1,24 @@
-import { analyst, investigationCase } from "@ontology/sdk";
+import { analyst, finding, investigationCase } from "@ontology/sdk";
 import { Client, Osdk } from "@osdk/client";
 import { createEditBatch, Edits, UserFacingError } from "@osdk/functions";
 import { objectId } from "../lib/ids.js";
-import { STATUS_CLOSED, STATUS_PENDING_CLOSE } from "../lib/policy.js";
+import {
+    FINDING_OPEN,
+    STATUS_CLOSED,
+    STATUS_PENDING_CLOSE,
+} from "../lib/policy.js";
 
 type OntologyEdit = Edits.Object<typeof investigationCase>;
 
 /**
- * Moves a case to Pending close. Open findings (riskScore > 0) are rejected
- * here, not in the UI.
+ * Moves a case to Pending close. Open findings are rejected here, not in the
+ * UI — the desk may still let the analyst click so this error can surface.
  */
-function requestClose(
+async function requestClose(
     client: Client,
     caseToClose: Osdk.Instance<investigationCase>,
     actingAnalyst: Osdk.Instance<analyst>,
-): OntologyEdit[] {
+): Promise<OntologyEdit[]> {
     if (actingAnalyst == null) {
         throw new UserFacingError("Select an analyst before requesting close.");
     }
@@ -31,7 +35,14 @@ function requestClose(
         );
     }
 
-    if ((caseToClose.riskScore ?? 0) > 0) {
+    const caseId = objectId(caseToClose);
+    // First page covers the demo queue. Same scale as openCase.
+    const page = await client(finding).fetchPage({ $pageSize: 50 });
+    const hasOpen = page.data.some(
+        (row) =>
+            row.status === FINDING_OPEN && String(row.caseId ?? "") === caseId,
+    );
+    if (hasOpen) {
         throw new UserFacingError(
             "Cannot request close while findings are still open. Resolve every open finding first.",
         );

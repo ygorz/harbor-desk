@@ -3,8 +3,10 @@ import { Client, Osdk } from "@osdk/client";
 import { createEditBatch, Edits, UserFacingError } from "@osdk/functions";
 import { objectId, optionalObjectId } from "../lib/ids.js";
 import {
+    assertKnownSeverity,
     cappedRisk,
     FINDING_OPEN,
+    isFindingsFrozen,
     severityWeight,
     STATUS_CLOSED,
     statusAfterRisk,
@@ -29,13 +31,18 @@ function addFinding(
     if (actingAnalyst == null) {
         throw new UserFacingError("Select an analyst before adding a finding.");
     }
-    if (caseToUpdate.status === STATUS_CLOSED) {
-        throw new UserFacingError("Closed cases cannot take new findings.");
+    if (isFindingsFrozen(caseToUpdate.status)) {
+        throw new UserFacingError(
+            caseToUpdate.status === STATUS_CLOSED
+                ? "Closed cases cannot take new findings."
+                : "Cannot add findings while a close is waiting for four-eyes.",
+        );
     }
     const trimmedTitle = title.trim();
     if (trimmedTitle === "") {
         throw new UserFacingError("A finding needs a title.");
     }
+    assertKnownSeverity(severity);
 
     const nextScore = cappedRisk(
         (caseToUpdate.riskScore ?? 0) + severityWeight(severity),

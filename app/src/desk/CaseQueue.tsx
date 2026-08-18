@@ -104,7 +104,7 @@ export default function CaseQueue({
                   loading={loadDemoPending}
                   onClick={onLoadDemo}
                 >
-                  Load Demo
+                  Load demo
                 </Button>
               ) : undefined
             }

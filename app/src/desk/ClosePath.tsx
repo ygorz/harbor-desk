@@ -16,7 +16,7 @@ import {
   STATUS_CLOSED,
   STATUS_PENDING_CLOSE,
 } from "./status";
-import { showError } from "./toast";
+import { showError, showSuccess } from "./toast";
 import css from "./desk.module.css";
 
 export default function ClosePath({
@@ -45,13 +45,17 @@ export default function ClosePath({
     return id !== requesterId;
   });
 
-  async function run(work: () => Promise<unknown>): Promise<void> {
+  async function run(
+    work: () => Promise<unknown>,
+    success: string,
+  ): Promise<void> {
     if (actingAs == null) {
       showError("Select an analyst first.");
       return;
     }
     try {
       await work();
+      showSuccess(success);
     } catch (caught) {
       showError(errorMessage(caught));
     }
@@ -59,17 +63,18 @@ export default function ClosePath({
 
   async function approve(): Promise<void> {
     setConfirmOpen(false);
-    await run(() =>
-      approveAction.applyAction({
-        caseToClose: item,
-        actingAnalyst: actingAs!,
-      }),
+    await run(
+      () =>
+        approveAction.applyAction({
+          caseToClose: item,
+          actingAnalyst: actingAs!,
+        }),
+      "Case closed.",
     );
   }
 
-  const canRequest =
-    actingAs != null && !closed && !pending && risk === 0;
-  const canApprove = actingAs != null && pending && !isRequester;
+  const canRequest = actingAs != null && !closed && !pending;
+  const canApprove = actingAs != null && pending;
 
   let requestHint: string;
   if (closed) requestHint = "Case is closed.";
@@ -104,7 +109,7 @@ export default function ClosePath({
           <p className={css.closeStepHint}>
             {openCount === 0
               ? "Every finding is mitigated."
-              : "Mitigate open findings to drop risk to 0."}
+              : "Resolve open findings to drop risk to 0."}
           </p>
         </li>
         <li className={css.closeStep}>
@@ -112,15 +117,17 @@ export default function ClosePath({
           <div className={css.closeStepBody}>
             <Button
               intent="warning"
-              icon="log-out"
+              icon="send-to"
               loading={requestAction.isPending}
               disabled={!canRequest}
               onClick={() =>
-                void run(() =>
-                  requestAction.applyAction({
-                    caseToClose: item,
-                    actingAnalyst: actingAs!,
-                  }),
+                void run(
+                  () =>
+                    requestAction.applyAction({
+                      caseToClose: item,
+                      actingAnalyst: actingAs!,
+                    }),
+                  "Close requested.",
                 )
               }
             >

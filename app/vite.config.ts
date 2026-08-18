@@ -43,7 +43,6 @@ export default defineConfig({
         __dirname,
         "../ontology/osdk-output/ontology/dist",
       ),
-      "@": path.resolve(__dirname, "./src"),
     },
   },
   optimizeDeps: {

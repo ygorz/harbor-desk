@@ -12,7 +12,7 @@ imports:
 bundle:
   name: "harbor-desk"
   description: "Casework desk for financial-crime investigations. Ontology, policy, and UI ship as one Marketplace product."
-  mavenCoordinate: "com.harbordesk:harbor-desk"
+  mavenCoordinate: "com.palantirfoundry.usw-17.georgegorzhiyev.gg-maven.marketplace-store-582603da-93a1-4ecf-b4b6-95335b82a899:harbor-desk"
   installMode: SINGLETON
 osdkOutput: ontology/osdk-output
 apiNamespace: com.harbordesk

@@ -44,6 +44,15 @@ export function showError(message: string): void {
   });
 }
 
+export function showSuccess(message: string): void {
+  showToast({
+    icon: "tick",
+    intent: "success",
+    message,
+    timeout: 2500,
+  });
+}
+
 export function showCopied(): void {
   showToast({
     icon: "tick",

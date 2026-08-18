@@ -34,7 +34,7 @@ export default createSeed((seed) => {
         id: "PER-VARGA",
         name: "Elena Varga",
         jurisdiction: "Cyprus",
-        notes: "Cyprus resident. Personal ETH wallet attributed during Northwind intake.",
+        notes: "Cyprus resident. Beneficial owner of Northwind Holdings. A personal ETH wallet was linked to her during this investigation.",
     });
 
     seed.add(organization, {
@@ -42,21 +42,21 @@ export default createSeed((seed) => {
         name: "Northwind Holdings LLC",
         legalForm: "LLC",
         jurisdiction: "Delaware, US",
-        notes: "Formed 11 days before the first inbound transfer to the treasury wallet.",
+        notes: "Delaware LLC. The treasury wallet received its first inbound transfer within 48 hours of formation.",
     });
     seed.add(organization, {
         id: "ORG-RETAIL",
         name: "Harbor Retail LLC",
         legalForm: "LLC",
         jurisdiction: "New York, US",
-        notes: "High-volume refunds. No on-chain footprint in this case.",
+        notes: "New York retailer with a high volume of customer refunds. No crypto wallets on this file.",
     });
     seed.add(organization, {
         id: "ORG-CLEARSTREAM",
         name: "Clearstream Payments Inc",
         legalForm: "Inc",
         jurisdiction: "United Kingdom",
-        notes: "Prior SAR filed. Case closed after four-eyes review.",
+        notes: "UK payments firm. A suspicious activity report was filed on the prior case, which is now closed.",
     });
 
     seed.add(ownershipInterest, {
@@ -77,38 +77,40 @@ export default createSeed((seed) => {
         id: "WALLET-PERSONAL",
         address: "0xb0bA11CE0000000000000000000000000000b0b",
         chain: "ETH",
-        label: "Varga personal",
+        label: "Elena Varga — personal",
         personId: "PER-VARGA",
     });
 
     seed.add(investigationCase, {
         id: "CASE-2041",
-        title: "Northwind — treasury funding",
+        title: "Northwind Holdings — treasury funding",
         status: "In review",
         severity: "High",
         riskScore: 65,
         summary:
-            "Newly formed Delaware LLC. Treasury wallet funded within 48 hours of incorporation from a personal wallet attributed to the beneficial owner.",
+            "Newly formed Delaware LLC. The company treasury wallet was funded within 48 hours of incorporation, from a personal wallet linked to the beneficial owner.",
         organizationId: "ORG-NORTHWIND",
         ownerId: "ANALYST-MAYA",
     });
     seed.add(investigationCase, {
         id: "CASE-1988",
-        title: "Harbor Retail — structured refunds",
+        title: "Harbor Retail — refunds under reporting thresholds",
         status: "Open",
         severity: "Medium",
         riskScore: 29,
-        summary: "Repeated refunds just under reporting thresholds across three merchant IDs.",
+        summary:
+            "Repeated customer refunds just under reporting thresholds across three merchant accounts.",
         organizationId: "ORG-RETAIL",
         ownerId: "ANALYST-PRIYA",
     });
     seed.add(investigationCase, {
         id: "CASE-1902",
-        title: "Clearstream — SAR close",
+        title: "Clearstream Payments — source of funds (closed)",
         status: "Closed",
         severity: "High",
         riskScore: 0,
-        summary: "Narrative filed. Closed after four-eyes review.",
+        summary:
+            "Could not establish source of funds on a large cross-border payment. Suspicious activity report filed. Closed after four-eyes review.",
         organizationId: "ORG-CLEARSTREAM",
         ownerId: "ANALYST-JORDAN",
         closeRequestedById: "ANALYST-MAYA",
@@ -116,8 +118,8 @@ export default createSeed((seed) => {
 
     seed.add(finding, {
         id: "FIND-2041-1",
-        title: "Treasury funded within 48h of incorporation",
-        body: "Northwind Holdings LLC was formed in Delaware. Within 48 hours the treasury wallet received its first inbound ETH transfer.",
+        title: "Treasury funded within 48 hours of incorporation",
+        body: "Northwind Holdings LLC was formed in Delaware. Within 48 hours, the company treasury wallet received its first inbound ETH transfer.",
         severity: "Critical",
         status: "Open",
         caseId: "CASE-2041",
@@ -126,8 +128,8 @@ export default createSeed((seed) => {
     });
     seed.add(finding, {
         id: "FIND-2041-2",
-        title: "Personal wallet funded the treasury in two hops",
-        body: "The Varga personal wallet sent ETH through one intermediate address into the Northwind treasury. Amounts split just below round figures.",
+        title: "Beneficial owner's wallet funded the treasury through an intermediate address",
+        body: "Elena Varga's personal ETH wallet sent funds to the Northwind treasury through one intermediate address rather than directly. The amounts were split into several transfers just below round figures.",
         severity: "High",
         status: "Open",
         caseId: "CASE-2041",
@@ -136,11 +138,12 @@ export default createSeed((seed) => {
     });
     seed.add(finding, {
         id: "FIND-2041-3",
-        title: "Registered agent is a mass-formation service",
-        body: "The Delaware registered agent appears on several hundred same-week formations.",
+        title: "Registered agent listed on hundreds of same-week formations",
+        body: "Northwind's Delaware registered agent appears on several hundred LLC formations filed the same week. High-volume agents can be used to stand up companies quickly.",
         severity: "Medium",
         status: "Mitigated",
-        mitigationNote: "Counsel confirmed it is a standard registered-agent product.",
+        mitigationNote:
+            "Legal reviewed the agent. High-volume Delaware registered agents are common for new LLCs and this one does not, by itself, indicate concealment.",
         resolvedById: "ANALYST-MAYA",
         caseId: "CASE-2041",
         organizationId: "ORG-NORTHWIND",
@@ -149,7 +152,7 @@ export default createSeed((seed) => {
     seed.add(finding, {
         id: "FIND-1988-1",
         title: "Refunds cluster just under the reporting threshold",
-        body: "Fourteen refunds in 11 days, each $9,400–$9,850, across three Harbor Retail merchant IDs.",
+        body: "Fourteen refunds in 11 days, each between $9,400 and $9,850, across three Harbor Retail merchant accounts.",
         severity: "Medium",
         status: "Open",
         caseId: "CASE-1988",
@@ -157,8 +160,8 @@ export default createSeed((seed) => {
     });
     seed.add(finding, {
         id: "FIND-1988-2",
-        title: "Same device fingerprint on two merchant IDs",
-        body: "Checkout device hash repeats on merchant IDs that Harbor Retail booked as unrelated storefronts.",
+        title: "Same checkout device on two merchant accounts",
+        body: "The same checkout device was used on two Harbor Retail merchant accounts that the company listed as separate storefronts.",
         severity: "Medium",
         status: "Open",
         caseId: "CASE-1988",
@@ -166,8 +169,8 @@ export default createSeed((seed) => {
     });
     seed.add(finding, {
         id: "FIND-1988-3",
-        title: "Chargeback rate elevated vs peer cohort",
-        body: "90-day chargeback rate is 3.1x the peer merchant cohort. Low confidence until acquiring bank file is attached.",
+        title: "Chargeback rate well above similar merchants",
+        body: "Chargebacks over the last 90 days are 3.1 times the rate for similar merchants. Treat as low confidence until the card processor's report is on file.",
         severity: "Low",
         status: "Open",
         caseId: "CASE-1988",
@@ -176,11 +179,12 @@ export default createSeed((seed) => {
 
     seed.add(finding, {
         id: "FIND-1902-1",
-        title: "Correspondent-bank narrative filed",
-        body: "Clearstream Payments could not source funds for a £1.8m corridor payment.",
+        title: "Source of funds not established on a £1.8m payment",
+        body: "Clearstream Payments could not establish the source of funds for a £1.8 million cross-border payment.",
         severity: "High",
         status: "Mitigated",
-        mitigationNote: "SAR narrative filed with the correspondent bank.",
+        mitigationNote:
+            "A suspicious activity report was filed. The case was closed after a second analyst approved.",
         resolvedById: "ANALYST-JORDAN",
         caseId: "CASE-1902",
         organizationId: "ORG-CLEARSTREAM",

@@ -1,6 +1,7 @@
 {
   "name": "harbor-desk",
   "private": true,
+  "license": "MIT",
   "packageManager": "pnpm@11.12.0",
   "scripts": {
     "dev": "NX_SKIP_VSCODE_EXTENSION_INSTALL=true npx nx reset && NX_SKIP_VSCODE_EXTENSION_INSTALL=true npx nx run harbor-desk:dev",

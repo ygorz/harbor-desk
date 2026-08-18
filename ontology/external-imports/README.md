@@ -15,8 +15,8 @@ without redefining them.
 
 ## Refreshing the import
 
-Regenerate this file with the CLI (overwrites the placeholder shipped with the
-template):
+Regenerate this file with the CLI (overwrites the empty placeholder so the
+project builds before you run an import):
 
 ```sh
 foundry import ontology --ontology-rid ri.ontology.main.ontology.<uuid>

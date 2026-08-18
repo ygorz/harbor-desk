@@ -52,7 +52,7 @@ export default function CaseHeader({
           <RiskMeter value={risk} size="full" />
         </div>
         <p className={css.riskCaption}>
-          Open findings raise this. Mitigate to drop. Close blocked above 0.
+          Open findings raise this. Resolve to drop. Close blocked above 0.
         </p>
       </div>
     </header>

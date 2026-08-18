@@ -1,6 +1,6 @@
 {
         "name": "@harbordesk/functions",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Harbor Desk policy: findings, close rules, four-eyes, demo load",
   "type": "module",
   "exports": {
@@ -16,6 +16,7 @@
   ],
   "scripts": {
     "compile": "tsc --project src/tsconfig.json",
+    "test": "vitest run",
     "clean-deploy": "node -e \"require('fs').rmSync('build/deploy',{recursive:true,force:true})\"",
     "pack-osdk": "node -e \"const fs=require('fs'),d='build/deploy/node_modules/@ontology/sdk';fs.rmSync(d,{recursive:true,force:true});fs.cpSync('../../ontology/osdk-output/ontology',d,{recursive:true,dereference:true})\""
   },
@@ -30,7 +31,8 @@
     "@opentelemetry/api-logs": "0.215.0"
   },
   "devDependencies": {
-    "@types/node": "^22.20.1"
+    "@types/node": "^22.20.1",
+    "vitest": "^3.2.4"
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }

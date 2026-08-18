@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Agent and local-dev notes for Harbor Desk. The product pitch is [README.md](README.md).
+
 ## Foundry concepts
 
 - **Ontology**: the data model layer that defines the structure and relationships of every entity in the project.
@@ -46,6 +48,7 @@ Orchestration is Nx targets, defined in the root and per-component `project.json
 - `pnpm run configure` resolves the deploy target and writes `env.yml`. Needed once before the first deploy.
 - `cd app && pnpm run typecheck` type-checks the frontend. Also chained into `app`'s `build`.
 - `cd app && pnpm run lint` or `pnpm run lint:fix` lints the frontend.
+- `cd functions/typescript-functions && pnpm test` runs policy and close-path refusal tests. Not part of the Marketplace bundle.
 
 ## Dev servers
 
