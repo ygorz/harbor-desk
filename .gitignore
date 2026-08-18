@@ -21,5 +21,15 @@ functions/typescript-functions/build/functions.json
 # enrollment-specific deploy target (store RID, folder, markings, subdomain)
 env.yml
 
+# Foundry CLI local signing material. foundry.yml points at the key from
+# `foundry login`; .security/ is generated next to the repo. Do not commit.
+.security/
+*.pem
+
+# Real Foundry app env (local mock .env.development is committed on purpose)
+.env.production
+.env.remote
+.env.code-workspaces
+
 # MacOS Finder clutter
 .DS_Store
